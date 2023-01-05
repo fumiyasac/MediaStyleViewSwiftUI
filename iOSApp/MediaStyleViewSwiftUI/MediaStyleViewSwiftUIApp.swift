@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// TODO: MultiModule＆SwiftUIで構成する
+// TODO: StateMachineを利用した状態管理をする
+
 @main
 struct MediaStyleViewSwiftUIApp: App {
     var body: some Scene {
