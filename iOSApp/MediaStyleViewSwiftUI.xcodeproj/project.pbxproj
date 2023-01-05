@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		DE03D014296702250054BCF1 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = DE03D013296702250054BCF1 /* SDWebImageSwiftUI */; };
 		DE03D017296702BB0054BCF1 /* Parchment in Frameworks */ = {isa = PBXBuildFile; productRef = DE03D016296702BB0054BCF1 /* Parchment */; };
+		DE03D01A296707D30054BCF1 /* PopupView in Frameworks */ = {isa = PBXBuildFile; productRef = DE03D019296707D30054BCF1 /* PopupView */; };
 		DE277AE12707258800CB0976 /* MediaStyleViewSwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE277AE02707258800CB0976 /* MediaStyleViewSwiftUIApp.swift */; };
 		DE277AE32707258800CB0976 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE277AE22707258800CB0976 /* ContentView.swift */; };
 		DE277AE52707258B00CB0976 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DE277AE42707258B00CB0976 /* Assets.xcassets */; };
@@ -53,6 +54,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DE03D01A296707D30054BCF1 /* PopupView in Frameworks */,
 				DE03D014296702250054BCF1 /* SDWebImageSwiftUI in Frameworks */,
 				DE03D017296702BB0054BCF1 /* Parchment in Frameworks */,
 			);
@@ -150,6 +152,7 @@
 			packageProductDependencies = (
 				DE03D013296702250054BCF1 /* SDWebImageSwiftUI */,
 				DE03D016296702BB0054BCF1 /* Parchment */,
+				DE03D019296707D30054BCF1 /* PopupView */,
 			);
 			productName = MediaStyleViewSwiftUI;
 			productReference = DE277ADD2707258800CB0976 /* MediaStyleViewSwiftUI.app */;
@@ -226,6 +229,7 @@
 			packageReferences = (
 				DE03D012296702250054BCF1 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
 				DE03D015296702BB0054BCF1 /* XCRemoteSwiftPackageReference "Parchment" */,
+				DE03D018296707D30054BCF1 /* XCRemoteSwiftPackageReference "PopupView" */,
 			);
 			productRefGroup = DE277ADE2707258800CB0976 /* Products */;
 			projectDirPath = "";
@@ -637,6 +641,14 @@
 				kind = branch;
 			};
 		};
+		DE03D018296707D30054BCF1 /* XCRemoteSwiftPackageReference "PopupView" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/exyte/PopupView.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -649,6 +661,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DE03D015296702BB0054BCF1 /* XCRemoteSwiftPackageReference "Parchment" */;
 			productName = Parchment;
+		};
+		DE03D019296707D30054BCF1 /* PopupView */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DE03D018296707D30054BCF1 /* XCRemoteSwiftPackageReference "PopupView" */;
+			productName = PopupView;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
