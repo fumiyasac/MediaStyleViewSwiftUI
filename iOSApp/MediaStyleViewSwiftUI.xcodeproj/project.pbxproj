@@ -11,6 +11,7 @@
 		DE03D017296702BB0054BCF1 /* Parchment in Frameworks */ = {isa = PBXBuildFile; productRef = DE03D016296702BB0054BCF1 /* Parchment */; };
 		DE03D01A296707D30054BCF1 /* PopupView in Frameworks */ = {isa = PBXBuildFile; productRef = DE03D019296707D30054BCF1 /* PopupView */; };
 		DE03D01D296709110054BCF1 /* SwiftyUserDefaults in Frameworks */ = {isa = PBXBuildFile; productRef = DE03D01C296709110054BCF1 /* SwiftyUserDefaults */; };
+		DE03D0202967094C0054BCF1 /* CollectionViewPagingLayout in Frameworks */ = {isa = PBXBuildFile; productRef = DE03D01F2967094C0054BCF1 /* CollectionViewPagingLayout */; };
 		DE277AE12707258800CB0976 /* MediaStyleViewSwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE277AE02707258800CB0976 /* MediaStyleViewSwiftUIApp.swift */; };
 		DE277AE32707258800CB0976 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE277AE22707258800CB0976 /* ContentView.swift */; };
 		DE277AE52707258B00CB0976 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DE277AE42707258B00CB0976 /* Assets.xcassets */; };
@@ -58,6 +59,7 @@
 				DE03D01A296707D30054BCF1 /* PopupView in Frameworks */,
 				DE03D014296702250054BCF1 /* SDWebImageSwiftUI in Frameworks */,
 				DE03D017296702BB0054BCF1 /* Parchment in Frameworks */,
+				DE03D0202967094C0054BCF1 /* CollectionViewPagingLayout in Frameworks */,
 				DE03D01D296709110054BCF1 /* SwiftyUserDefaults in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -156,6 +158,7 @@
 				DE03D016296702BB0054BCF1 /* Parchment */,
 				DE03D019296707D30054BCF1 /* PopupView */,
 				DE03D01C296709110054BCF1 /* SwiftyUserDefaults */,
+				DE03D01F2967094C0054BCF1 /* CollectionViewPagingLayout */,
 			);
 			productName = MediaStyleViewSwiftUI;
 			productReference = DE277ADD2707258800CB0976 /* MediaStyleViewSwiftUI.app */;
@@ -234,6 +237,7 @@
 				DE03D015296702BB0054BCF1 /* XCRemoteSwiftPackageReference "Parchment" */,
 				DE03D018296707D30054BCF1 /* XCRemoteSwiftPackageReference "PopupView" */,
 				DE03D01B296709110054BCF1 /* XCRemoteSwiftPackageReference "SwiftyUserDefaults" */,
+				DE03D01E2967094C0054BCF1 /* XCRemoteSwiftPackageReference "CollectionViewPagingLayout" */,
 			);
 			productRefGroup = DE277ADE2707258800CB0976 /* Products */;
 			projectDirPath = "";
@@ -661,6 +665,14 @@
 				kind = branch;
 			};
 		};
+		DE03D01E2967094C0054BCF1 /* XCRemoteSwiftPackageReference "CollectionViewPagingLayout" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/amirdew/CollectionViewPagingLayout.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -683,6 +695,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DE03D01B296709110054BCF1 /* XCRemoteSwiftPackageReference "SwiftyUserDefaults" */;
 			productName = SwiftyUserDefaults;
+		};
+		DE03D01F2967094C0054BCF1 /* CollectionViewPagingLayout */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DE03D01E2967094C0054BCF1 /* XCRemoteSwiftPackageReference "CollectionViewPagingLayout" */;
+			productName = CollectionViewPagingLayout;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

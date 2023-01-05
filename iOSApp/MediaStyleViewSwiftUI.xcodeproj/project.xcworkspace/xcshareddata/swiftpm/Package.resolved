@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "collectionviewpaginglayout",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/amirdew/CollectionViewPagingLayout.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "5b40724af52b4d80f4b5d90a41f1aab8476be4f9"
+      }
+    },
+    {
       "identity" : "parchment",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/rechsteiner/Parchment.git",
