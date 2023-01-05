@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "parchment",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/rechsteiner/Parchment.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "51eba77aa6761f27cc30631e2823f0304e4eedb4"
+      }
+    },
+    {
       "identity" : "sdwebimage",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SDWebImage/SDWebImage.git",

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		DE03D014296702250054BCF1 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = DE03D013296702250054BCF1 /* SDWebImageSwiftUI */; };
+		DE03D017296702BB0054BCF1 /* Parchment in Frameworks */ = {isa = PBXBuildFile; productRef = DE03D016296702BB0054BCF1 /* Parchment */; };
 		DE277AE12707258800CB0976 /* MediaStyleViewSwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE277AE02707258800CB0976 /* MediaStyleViewSwiftUIApp.swift */; };
 		DE277AE32707258800CB0976 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE277AE22707258800CB0976 /* ContentView.swift */; };
 		DE277AE52707258B00CB0976 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DE277AE42707258B00CB0976 /* Assets.xcassets */; };
@@ -53,6 +54,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DE03D014296702250054BCF1 /* SDWebImageSwiftUI in Frameworks */,
+				DE03D017296702BB0054BCF1 /* Parchment in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,6 +149,7 @@
 			name = MediaStyleViewSwiftUI;
 			packageProductDependencies = (
 				DE03D013296702250054BCF1 /* SDWebImageSwiftUI */,
+				DE03D016296702BB0054BCF1 /* Parchment */,
 			);
 			productName = MediaStyleViewSwiftUI;
 			productReference = DE277ADD2707258800CB0976 /* MediaStyleViewSwiftUI.app */;
@@ -222,6 +225,7 @@
 			mainGroup = DE277AD42707258800CB0976;
 			packageReferences = (
 				DE03D012296702250054BCF1 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
+				DE03D015296702BB0054BCF1 /* XCRemoteSwiftPackageReference "Parchment" */,
 			);
 			productRefGroup = DE277ADE2707258800CB0976 /* Products */;
 			projectDirPath = "";
@@ -625,6 +629,14 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		DE03D015296702BB0054BCF1 /* XCRemoteSwiftPackageReference "Parchment" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rechsteiner/Parchment.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -632,6 +644,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DE03D012296702250054BCF1 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;
 			productName = SDWebImageSwiftUI;
+		};
+		DE03D016296702BB0054BCF1 /* Parchment */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DE03D015296702BB0054BCF1 /* XCRemoteSwiftPackageReference "Parchment" */;
+			productName = Parchment;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
