@@ -5,6 +5,7 @@
 //  Created by 酒井文也 on 2021/10/01.
 //
 
+import AppFeature
 import SwiftUI
 
 // TODO: MultiModule＆SwiftUIで構成する

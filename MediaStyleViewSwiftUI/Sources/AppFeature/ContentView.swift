@@ -7,12 +7,21 @@
 
 import SwiftUI
 
-struct ContentView: View {
-    var body: some View {
+public struct ContentView: View {
+
+    // MARK: - Initializer
+
+    public init() {}
+
+    // MARK: - Body
+
+    public var body: some View {
         Text("Hello, world!")
             .padding()
     }
 }
+
+// MARK: - Preview
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
