@@ -16,9 +16,6 @@
 		DE277AE32707258800CB0976 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE277AE22707258800CB0976 /* ContentView.swift */; };
 		DE277AE52707258B00CB0976 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DE277AE42707258B00CB0976 /* Assets.xcassets */; };
 		DE277AE82707258B00CB0976 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DE277AE72707258B00CB0976 /* Preview Assets.xcassets */; };
-		DE277AF22707258B00CB0976 /* MediaStyleViewSwiftUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE277AF12707258B00CB0976 /* MediaStyleViewSwiftUITests.swift */; };
-		DE277AFC2707258B00CB0976 /* MediaStyleViewSwiftUIUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE277AFB2707258B00CB0976 /* MediaStyleViewSwiftUIUITests.swift */; };
-		DE277AFE2707258B00CB0976 /* MediaStyleViewSwiftUIUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE277AFD2707258B00CB0976 /* MediaStyleViewSwiftUIUITestsLaunchTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,10 +42,7 @@
 		DE277AE42707258B00CB0976 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DE277AE72707258B00CB0976 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		DE277AED2707258B00CB0976 /* MediaStyleViewSwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MediaStyleViewSwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		DE277AF12707258B00CB0976 /* MediaStyleViewSwiftUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaStyleViewSwiftUITests.swift; sourceTree = "<group>"; };
 		DE277AF72707258B00CB0976 /* MediaStyleViewSwiftUIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MediaStyleViewSwiftUIUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		DE277AFB2707258B00CB0976 /* MediaStyleViewSwiftUIUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaStyleViewSwiftUIUITests.swift; sourceTree = "<group>"; };
-		DE277AFD2707258B00CB0976 /* MediaStyleViewSwiftUIUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaStyleViewSwiftUIUITestsLaunchTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,8 +79,6 @@
 			isa = PBXGroup;
 			children = (
 				DE277ADF2707258800CB0976 /* MediaStyleViewSwiftUI */,
-				DE277AF02707258B00CB0976 /* MediaStyleViewSwiftUITests */,
-				DE277AFA2707258B00CB0976 /* MediaStyleViewSwiftUIUITests */,
 				DE277ADE2707258800CB0976 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -118,23 +110,6 @@
 				DE277AE72707258B00CB0976 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
-			sourceTree = "<group>";
-		};
-		DE277AF02707258B00CB0976 /* MediaStyleViewSwiftUITests */ = {
-			isa = PBXGroup;
-			children = (
-				DE277AF12707258B00CB0976 /* MediaStyleViewSwiftUITests.swift */,
-			);
-			path = MediaStyleViewSwiftUITests;
-			sourceTree = "<group>";
-		};
-		DE277AFA2707258B00CB0976 /* MediaStyleViewSwiftUIUITests */ = {
-			isa = PBXGroup;
-			children = (
-				DE277AFB2707258B00CB0976 /* MediaStyleViewSwiftUIUITests.swift */,
-				DE277AFD2707258B00CB0976 /* MediaStyleViewSwiftUIUITestsLaunchTests.swift */,
-			);
-			path = MediaStyleViewSwiftUIUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -290,7 +265,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DE277AF22707258B00CB0976 /* MediaStyleViewSwiftUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,8 +272,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DE277AFE2707258B00CB0976 /* MediaStyleViewSwiftUIUITestsLaunchTests.swift in Sources */,
-				DE277AFC2707258B00CB0976 /* MediaStyleViewSwiftUIUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
