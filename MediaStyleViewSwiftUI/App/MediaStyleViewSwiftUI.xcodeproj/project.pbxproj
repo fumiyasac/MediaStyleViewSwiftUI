@@ -20,6 +20,7 @@
 
 /* Begin PBXFileReference section */
 		DE046004299D2609000593CA /* MediaStyleViewSwiftUI */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = MediaStyleViewSwiftUI; path = ..; sourceTree = "<group>"; };
+		DE0AF4CE299ED99300F9AB7B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DE277ADD2707258800CB0976 /* MediaStyleViewSwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MediaStyleViewSwiftUI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE277AE02707258800CB0976 /* MediaStyleViewSwiftUIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaStyleViewSwiftUIApp.swift; sourceTree = "<group>"; };
 		DE277AE42707258B00CB0976 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -64,6 +65,7 @@
 		DE277ADF2707258800CB0976 /* MediaStyleViewSwiftUI */ = {
 			isa = PBXGroup;
 			children = (
+				DE0AF4CE299ED99300F9AB7B /* Info.plist */,
 				DE277AE02707258800CB0976 /* MediaStyleViewSwiftUIApp.swift */,
 				DE277AE42707258B00CB0976 /* Assets.xcassets */,
 				DE277AE62707258B00CB0976 /* Preview Content */,
@@ -305,6 +307,7 @@
 				DEVELOPMENT_TEAM = S5BF5553KY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MediaStyleViewSwiftUI/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -335,6 +338,7 @@
 				DEVELOPMENT_TEAM = S5BF5553KY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MediaStyleViewSwiftUI/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
