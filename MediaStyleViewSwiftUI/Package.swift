@@ -16,5 +16,8 @@ let package = Package(
     ],
     targets: [
         .target(name: "AppFeature"),
+        .testTarget(
+            name: "AppFeatureTests",
+            dependencies: ["AppFeature"]),
     ]
 )
