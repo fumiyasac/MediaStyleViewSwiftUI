@@ -10,6 +10,7 @@ import SwiftUI
 
 // TODO: MultiModule＆SwiftUIで構成する
 // TODO: StateMachineを利用した状態管理をする
+// TODO: BackendはGo言語で作成する
 
 @main
 struct MediaStyleViewSwiftUIApp: App {
