@@ -9,7 +9,7 @@
 # -----------
 
 # 利用するGolangのバージョン指定
-FROM golang:1.24.2-alpine
+FROM golang:1.25.1-alpine
 
 # 実際にアプリケーションを動作させるディレクトリ
 WORKDIR /app
