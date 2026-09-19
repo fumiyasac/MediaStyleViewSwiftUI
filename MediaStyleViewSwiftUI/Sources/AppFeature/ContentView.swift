@@ -9,6 +9,9 @@ import SwiftUI
 
 public struct ContentView: View {
 
+    // 選択中タブ（0:月 / 1:一覧）。タブ切り替えを月表示側へ伝えて位置を復元する
+    @State private var selectedTab = 0
+
     // MARK: - Initializer
 
     public init() {}
@@ -16,8 +19,20 @@ public struct ContentView: View {
     // MARK: - Body
 
     public var body: some View {
-        Text("Hello, world!")
-            .padding()
+        TabView(selection: $selectedTab) {
+            MonthCalendarView(isActive: selectedTab == 0)
+                .tag(0)
+                .tabItem {
+                    Label("月", systemImage: "calendar")
+                }
+
+            CalendarListView()
+                .tag(1)
+                .tabItem {
+                    Label("一覧", systemImage: "list.bullet")
+                }
+        }
+        .tint(Color(red: 1.0, green: 0.23, blue: 0.19))
     }
 }
 
