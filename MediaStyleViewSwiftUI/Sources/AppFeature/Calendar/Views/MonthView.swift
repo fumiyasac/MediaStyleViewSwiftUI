@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MonthView: View {
 
-    let grid: MonthGrid
+    let grid: CalendarMonthGridView
 
     private let columns = Array(
         repeating: GridItem(.flexible(), spacing: 0), count: 7
@@ -108,7 +108,7 @@ struct MonthView: View {
 
 #Preview {
     ScrollView {
-        if let grid = MonthGrid(baseMonth: MonthGrid.startOfMonth(for: Date()), offset: 0) {
+        if let grid = CalendarMonthGridView(baseMonth: CalendarMonthGridView.startOfMonth(for: Date()), offset: 0) {
             MonthView(grid: grid)
         }
     }
