@@ -1,5 +1,5 @@
 //
-//  MonthCalendarView.swift
+//  CalendarMonthScreen.swift
 //  MediaStyleViewSwiftUI
 //
 //  Apple標準カレンダーの様に、月が縦に途切れなく続く無限スクロール画面
@@ -7,12 +7,12 @@
 
 import SwiftUI
 
-public struct MonthCalendarView: View {
+public struct CalendarMonthScreen: View {
 
     // MARK: - Property
 
     // 基準となる今月の1日
-    private let baseMonth = MonthGrid.startOfMonth(for: Date())
+    private let baseMonth = CalendarMonthGridView.startOfMonth(for: Date())
 
     // 前後100年分（±1200ヶ月）を用意し、LazyVStackで遅延描画することで
     // 実質「無限スクロール」の体験を実現する
@@ -68,7 +68,7 @@ public struct MonthCalendarView: View {
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(monthOffsets, id: \.self) { offset in
-                                if let grid = MonthGrid(baseMonth: baseMonth, offset: offset) {
+                                if let grid = CalendarMonthGridView(baseMonth: baseMonth, offset: offset) {
                                     MonthView(grid: grid)
                                         .id(offset)
                                         // 各月の位置をスクロール座標系で報告
@@ -214,5 +214,5 @@ extension Notification.Name {
 // MARK: - Preview
 
 #Preview {
-    MonthCalendarView()
+    CalendarMonthScreen()
 }

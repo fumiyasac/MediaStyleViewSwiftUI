@@ -1,5 +1,5 @@
 //
-//  EventRowView.swift
+//  CalendarEventRowView.swift
 //  MediaStyleViewSwiftUI
 //
 //  一覧表示内のイベント1件分の行
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct EventRowView: View {
+struct CalendarEventRowView: View {
 
     let event: CalendarEvent
 
@@ -61,7 +61,7 @@ struct EventRowView: View {
 
 #Preview {
     List {
-        EventRowView(event: CalendarSampleData.days[0].events[0])
-        EventRowView(event: CalendarSampleData.days[2].events[0])
+        CalendarEventRowView(event: CalendarSampleData.days[0].events[0])
+        CalendarEventRowView(event: CalendarSampleData.days[2].events[0])
     }
 }

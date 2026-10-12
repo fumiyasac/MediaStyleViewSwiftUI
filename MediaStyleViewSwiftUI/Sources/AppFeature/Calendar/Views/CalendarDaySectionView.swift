@@ -1,5 +1,5 @@
 //
-//  DaySectionView.swift
+//  CalendarDaySectionView.swift
 //  MediaStyleViewSwiftUI
 //
 //  一覧表示の日付ごとのセクション（左に日付・右にイベント群）
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct DaySectionView: View {
+struct CalendarDaySectionView: View {
 
     let day: CalendarDay
 
@@ -52,7 +52,7 @@ struct DaySectionView: View {
             // 右側のイベント一覧
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(day.events.enumerated()), id: \.element.id) { index, event in
-                    EventRowView(event: event)
+                    CalendarEventRowView(event: event)
 
                     if index < day.events.count - 1 {
                         Divider()
@@ -68,8 +68,8 @@ struct DaySectionView: View {
 
 #Preview {
     List {
-        DaySectionView(day: CalendarSampleData.days[0])
-        DaySectionView(day: CalendarSampleData.days[2])
+        CalendarDaySectionView(day: CalendarSampleData.days[0])
+        CalendarDaySectionView(day: CalendarSampleData.days[2])
     }
     .listStyle(.plain)
 }

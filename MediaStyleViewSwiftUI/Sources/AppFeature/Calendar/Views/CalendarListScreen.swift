@@ -1,5 +1,5 @@
 //
-//  CalendarListView.swift
+//  CalendarListScreen.swift
 //  MediaStyleViewSwiftUI
 //
 //  Apple標準カレンダーアプリの「一覧（リスト）表示」画面の再現
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-public struct CalendarListView: View {
+public struct CalendarListScreen: View {
 
     // MARK: - Property
 
@@ -47,7 +47,7 @@ public struct CalendarListView: View {
         NavigationStack {
             List {
                 ForEach(filteredDays) { day in
-                    DaySectionView(day: day)
+                    CalendarDaySectionView(day: day)
                         .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
                         .listRowSeparator(.hidden)
 
@@ -100,5 +100,5 @@ public struct CalendarListView: View {
 // MARK: - Preview
 
 #Preview {
-    CalendarListView()
+    CalendarListScreen()
 }

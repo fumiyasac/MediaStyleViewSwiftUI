@@ -1,5 +1,5 @@
 //
-//  MonthGrid.swift
+//  CalendarMonthGridView.swift
 //  MediaStyleViewSwiftUI
 //
 //  月表示（無限スクロール）用のグリッド計算ヘルパー
@@ -8,7 +8,7 @@
 import Foundation
 
 // 1ヶ月分のグリッドを組み立てる構造体
-struct MonthGrid {
+struct CalendarMonthGridView {
 
     let monthStart: Date          // 対象月の1日
     let cells: [Date?]            // 7列グリッド用（先頭・末尾の余白はnil）

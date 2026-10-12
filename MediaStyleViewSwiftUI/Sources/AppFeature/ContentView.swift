@@ -20,13 +20,13 @@ public struct ContentView: View {
 
     public var body: some View {
         TabView(selection: $selectedTab) {
-            MonthCalendarView(isActive: selectedTab == 0)
+            CalendarMonthScreen(isActive: selectedTab == 0)
                 .tag(0)
                 .tabItem {
                     Label("月", systemImage: "calendar")
                 }
 
-            CalendarListView()
+            CalendarListScreen()
                 .tag(1)
                 .tabItem {
                     Label("一覧", systemImage: "list.bullet")
