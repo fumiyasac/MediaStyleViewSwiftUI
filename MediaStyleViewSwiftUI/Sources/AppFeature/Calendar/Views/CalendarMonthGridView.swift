@@ -10,8 +10,10 @@ import Foundation
 // 1ヶ月分のグリッドを組み立てる構造体
 struct CalendarMonthGridView {
 
-    let monthStart: Date          // 対象月の1日
-    let cells: [Date?]            // 7列グリッド用（先頭・末尾の余白はnil）
+    // 対象月の1日
+    let monthStart: Date
+    // 7列グリッド用（先頭・末尾の余白はnil）
+    let cells: [Date?]
 
     private static var calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
