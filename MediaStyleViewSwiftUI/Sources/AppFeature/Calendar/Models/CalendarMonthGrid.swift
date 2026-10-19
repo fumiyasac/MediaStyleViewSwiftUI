@@ -5,7 +5,6 @@
 //  Created by 酒井文也 on 2026/10/19.
 //
 
-// CalendarMonthGrid.swift
 // 月表示の計算結果。SwiftUI ViewではないのでModelsに置く。
 
 import Foundation

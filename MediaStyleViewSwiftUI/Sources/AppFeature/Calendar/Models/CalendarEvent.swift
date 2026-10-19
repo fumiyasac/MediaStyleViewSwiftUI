@@ -2,8 +2,10 @@
 //  CalendarEvent.swift
 //  MediaStyleViewSwiftUI
 //
-//  Apple標準カレンダーアプリの「一覧（リスト）表示」再現用モデル
+//  Created by 酒井文也 on 2026/10/19.
 //
+
+//  Apple標準カレンダーアプリの「一覧（リスト）表示」再現用モデル
 
 import SwiftUI
 
