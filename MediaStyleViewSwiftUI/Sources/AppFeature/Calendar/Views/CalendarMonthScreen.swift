@@ -207,9 +207,9 @@ private struct MonthPositionKey: PreferenceKey {
 }
 
 // 「今日」ボタン → 今月へスクロールするための通知名
-extension Notification.Name {
-    static let scrollToToday = Notification.Name("MonthCalendarView.scrollToToday")
-}
+//extension Notification.Name {
+//    static let scrollToToday = Notification.Name("MonthCalendarView.scrollToToday")
+//}
 
 // MARK: - Preview
 
