@@ -11,42 +11,36 @@
 import Foundation
 
 struct CalendarMonthGrid: Sendable {
+ 
     // 対象月の1日
     let monthStart: Date
-    // 7列グリッド用（先頭・末尾の余白はnil）
+    // 7列グリッド用（先頭・末尾の余白セルはnil）
     let cells: [Date?]
 
-    private static var calendar: Calendar = {
+    private static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = Locale(identifier: "ja_JP")
-        calendar.firstWeekday = 1 // 日曜始まり
+        // 日曜日で始まる様に調整する
+        calendar.firstWeekday = 1
         return calendar
     }()
 
     // 基準月からのオフセット（例: 0=今月, 1=翌月, -1=先月）でグリッドを生成
     init?(baseMonth: Date, offset: Int) {
         let calendar = Self.calendar
-        guard
-            let monthStart = calendar.date(
-                byAdding: .month, value: offset, to: baseMonth
-            )
-        else { return nil }
-
+        guard let monthStart = calendar.date(byAdding: .month, value: offset, to: baseMonth) else {
+            return nil
+        }
         self.monthStart = monthStart
 
         // 当月の日数と、1日の曜日から先頭余白数を求める
-        guard
-            let range = calendar.range(of: .day, in: .month, for: monthStart)
-        else {
+        guard let range = calendar.range(of: .day, in: .month, for: monthStart) else {
             self.cells = []
             return
         }
-        let dayCount = range.count
-        let firstWeekday = calendar.component(.weekday, from: monthStart) // 1=日曜
-        let leadingBlanks = firstWeekday - calendar.firstWeekday
-
+        let leadingBlanks = calendar.component(.weekday, from: monthStart) - calendar.firstWeekday
         var cells: [Date?] = Array(repeating: nil, count: leadingBlanks)
-        for day in 0..<dayCount {
+        for day in 0..<range.count {
             cells.append(calendar.date(byAdding: .day, value: day, to: monthStart))
         }
         // 末尾を7の倍数になるまで余白で埋める
