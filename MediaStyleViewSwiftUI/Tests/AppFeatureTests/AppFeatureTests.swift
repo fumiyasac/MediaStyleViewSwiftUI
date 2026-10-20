@@ -37,7 +37,7 @@ final class AppFeatureTests: XCTestCase {
         let today = CalendarSampleData.days[0]
         XCTAssertFalse(today.events.isEmpty)
         XCTAssertEqual(
-            CalendarDateUtil.categories(on: today.date).count,
+            CalendarDateUtil.categories(on: today.date, in: CalendarSampleData.days).count,
             today.events.count
         )
     }
