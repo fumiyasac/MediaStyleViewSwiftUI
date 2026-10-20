@@ -21,7 +21,7 @@ struct CalendarMonthGridView: View {
                 if let date = cell {
                     CalendarDayCellView(
                         date: date,
-                        categories: CalendarDateUtil.categories(on: date, in: days),
+                        categories: CalendarDateUtil.categories(on: date),
                         isToday: CalendarDateUtil.isToday(date),
                         isSunday: CalendarDateUtil.isSunday(date),
                         isSaturday: CalendarDateUtil.isSaturday(date)
