@@ -3,7 +3,6 @@
 //  MediaStyleViewSwiftUI
 //
 //  一覧表示内のイベント1件分の行
-//
 
 import SwiftUI
 
