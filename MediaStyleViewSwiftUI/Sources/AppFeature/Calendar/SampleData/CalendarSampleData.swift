@@ -2,8 +2,8 @@
 //  CalendarSampleData.swift
 //  MediaStyleViewSwiftUI
 //
+
 //  一覧・月表示画面のプレビュー用ダミーデータ（本日基準で生成）
-//
 
 import Foundation
 
