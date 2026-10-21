@@ -133,4 +133,34 @@ final class AppFeatureTests: XCTestCase {
             Color.secondary
         )
     }
+
+    // 祝祭日は日曜と同じアクセント赤になる
+    func testWeekdayColorHolidayIsAccent() {
+        XCTAssertEqual(
+            CalendarTheme.weekdayColor(
+                isSunday: false, isSaturday: false, isHoliday: true, default: .secondary
+            ),
+            CalendarTheme.accent
+        )
+    }
+
+    // MARK: - CalendarDateUtil.isHoliday
+
+    // 元日（1/1）は祝祭日と判定される
+    func testIsHolidayForNewYearsDay() throws {
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 1, day: 1)))
+        XCTAssertTrue(CalendarDateUtil.isHoliday(date))
+    }
+
+    // 建国記念の日（2/11）は祝祭日と判定される
+    func testIsHolidayForNationalFoundationDay() throws {
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 2, day: 11)))
+        XCTAssertTrue(CalendarDateUtil.isHoliday(date))
+    }
+
+    // 祝祭日の無い平日は祝祭日と判定されない（2026/6/2は火曜で祝日なし）
+    func testIsHolidayFalseForOrdinaryWeekday() throws {
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 6, day: 2)))
+        XCTAssertFalse(CalendarDateUtil.isHoliday(date))
+    }
 }
