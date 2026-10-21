@@ -1,5 +1,5 @@
 //
-//  CalendarDayCellView.swift.swift
+//  CalendarDayCellView.swift
 //  MediaStyleViewSwiftUI
 //
 //  Created by 酒井文也 on 2026/10/21.
@@ -10,13 +10,16 @@
 import SwiftUI
 
 struct CalendarDayCellView: View {
+
+    // MARK: - Property
+
     let date: Date
     let categories: [CalendarCategory]
     let isToday: Bool
     let isSunday: Bool
     let isSaturday: Bool
 
-    private let accentRed = Color(red: 1.0, green: 0.23, blue: 0.19)
+    // MARK: - Body
 
     var body: some View {
         VStack(spacing: 3) {
@@ -25,11 +28,13 @@ struct CalendarDayCellView: View {
                 .foregroundStyle(dayColor)
                 .frame(width: 30, height: 30)
                 .background {
+                    // 本日は赤丸で強調（Apple純正と同じ表現）
                     if isToday {
-                        Circle().fill(accentRed)
+                        Circle().fill(CalendarTheme.accent)
                     }
                 }
 
+            // その日のイベントのカテゴリ色ドット（最大4件）
             HStack(spacing: 3) {
                 ForEach(Array(categories.prefix(4).enumerated()), id: \.offset) { _, category in
                     Circle()
@@ -43,15 +48,15 @@ struct CalendarDayCellView: View {
         .frame(height: 58)
     }
 
+    // MARK: - Private Function
+
+    // 日にちの文字色。本日だけは赤丸に重ねる白抜きにし、それ以外は平日.primary基準で共通解決する
     private var dayColor: Color {
         if isToday {
             return .white
-        } else if isSunday {
-            return accentRed
-        } else if isSaturday {
-            return Color(red: 0.20, green: 0.48, blue: 0.96)
-        } else {
-            return .primary
         }
+        return CalendarTheme.weekdayColor(
+            isSunday: isSunday, isSaturday: isSaturday, default: .primary
+        )
     }
 }

@@ -2,25 +2,20 @@
 //  CalendarDaySectionView.swift
 //  MediaStyleViewSwiftUI
 //
-//  一覧表示の日付ごとのセクション（左に日付・右にイベント群）
+//  Created by 酒井文也 on 2026/09/19.
 //
+
+// 一覧表示の日付ごとのセクション（左に日付・右にイベント群）
 
 import SwiftUI
 
 struct CalendarDaySectionView: View {
 
+    // MARK: - Property
+
     let day: CalendarDay
 
-    // 曜日ラベルの色（本日=赤 / 日曜=赤 / 土曜=青 / 平日=グレー）
-    private var weekdayColor: Color {
-        if day.isToday || day.isSunday {
-            return Color(red: 1.0, green: 0.23, blue: 0.19)
-        } else if day.isSaturday {
-            return Color(red: 0.20, green: 0.48, blue: 0.96)
-        } else {
-            return .secondary
-        }
-    }
+    // MARK: - Body
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -38,7 +33,7 @@ struct CalendarDaySectionView: View {
                         .foregroundStyle(.white)
                         .frame(width: 34, height: 34)
                         .background(
-                            Circle().fill(Color(red: 1.0, green: 0.23, blue: 0.19))
+                            Circle().fill(CalendarTheme.accent)
                         )
                 } else {
                     Text(day.dayText)
@@ -61,6 +56,19 @@ struct CalendarDaySectionView: View {
             }
         }
         .padding(.vertical, 10)
+    }
+
+    // MARK: - Private Function
+
+    // 曜日ラベルの色。本日は日曜と同じ赤扱いにし、以降は平日.secondary基準で共通解決する
+    // （本日の日にち自体は上の赤丸＋白抜きで表現するため、ここでは色のみ）
+    private var weekdayColor: Color {
+        if day.isToday {
+            return CalendarTheme.accent
+        }
+        return CalendarTheme.weekdayColor(
+            isSunday: day.isSunday, isSaturday: day.isSaturday, default: .secondary
+        )
     }
 }
 
