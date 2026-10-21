@@ -10,8 +10,13 @@
 import SwiftUI
 
 struct CalendarMonthView: View {
+
+    // MARK: - Property
+
     let grid: CalendarMonthGrid
     let days: [CalendarDay]
+
+    // MARK: - Body
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -23,6 +28,7 @@ struct CalendarMonthView: View {
 
             CalendarMonthGridView(grid: grid, days: days)
         }
+        // 月の区切りとして上端に細い境界線を重ねる
         .overlay(alignment: .top) {
             Rectangle()
                 .fill(Color(.separator))
@@ -30,6 +36,9 @@ struct CalendarMonthView: View {
         }
     }
 
+    // MARK: - Private Property
+
+    // 見出し。年をまたぐ1月のみ「 / yyyy年」を小さく淡色で後置して連結する
     private var monthTitle: Text {
         let month = Text(grid.monthText)
             .font(.system(size: 22, weight: .bold))

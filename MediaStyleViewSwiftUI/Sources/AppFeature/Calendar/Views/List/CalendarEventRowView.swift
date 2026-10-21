@@ -2,13 +2,20 @@
 //  CalendarEventRowView.swift
 //  MediaStyleViewSwiftUI
 //
-//  一覧表示内のイベント1件分の行
+//  Created by 酒井文也 on 2026/09/19.
+//
+
+// 一覧表示内のイベント1件分の行
 
 import SwiftUI
 
 struct CalendarEventRowView: View {
 
+    // MARK: - Property
+
     let event: CalendarEvent
+
+    // MARK: - Body
 
     var body: some View {
         HStack(spacing: 12) {
