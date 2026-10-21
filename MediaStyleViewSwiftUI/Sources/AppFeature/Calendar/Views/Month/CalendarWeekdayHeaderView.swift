@@ -10,8 +10,12 @@
 import SwiftUI
 
 struct CalendarWeekdayHeaderView: View {
+
+    // MARK: - Property
+
     private let weekdaySymbols = ["日", "月", "火", "水", "木", "金", "土"]
-    private let accentRed = Color(red: 1.0, green: 0.23, blue: 0.19)
+
+    // MARK: - Body
 
     var body: some View {
         HStack(spacing: 0) {
@@ -25,14 +29,17 @@ struct CalendarWeekdayHeaderView: View {
         .padding(.vertical, 8)
     }
 
+    // MARK: - Private Function
+
+    // 曜日ラベルの色。平日は.secondaryを既定にして日曜=赤/土曜=青を共通ロジックで解決する
     private func weekdayColor(index: Int) -> Color {
-        switch index {
-        case 0: return accentRed
-        case 6: return Color(red: 0.20, green: 0.48, blue: 0.96)
-        default: return .secondary
-        }
+        CalendarTheme.weekdayColor(
+            isSunday: index == 0, isSaturday: index == 6, default: .secondary
+        )
     }
 }
+
+// MARK: - Preview
 
 #Preview {
     CalendarWeekdayHeaderView()

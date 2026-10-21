@@ -2,18 +2,17 @@
 //  CalendarSampleData.swift
 //  MediaStyleViewSwiftUI
 //
+//  Created by 酒井文也 on 2026/09/19.
+//
 
-//  一覧・月表示画面のプレビュー用ダミーデータ（本日基準で生成）
+// 一覧・月表示画面のプレビュー用ダミーデータ（本日基準で生成）
 
 import Foundation
 
 enum CalendarSampleData {
 
-    private static var calendar: Calendar {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "ja_JP")
-        return calendar
-    }
+    // 共有Calendarを参照する（個別生成しない）
+    private static let calendar = CalendarFactory.shared
 
     // 本日からのオフセット（日数）と時刻からDateを組み立てるヘルパー。
     // これにより常に「本日」を起点としたサンプルになる

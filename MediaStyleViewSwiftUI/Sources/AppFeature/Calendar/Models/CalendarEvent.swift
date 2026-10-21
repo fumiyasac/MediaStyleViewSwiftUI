@@ -5,7 +5,7 @@
 //  Created by 酒井文也 on 2026/10/19.
 //
 
-//  Apple標準カレンダーアプリの「一覧（リスト）表示」再現用モデル
+// Apple標準カレンダーアプリの「一覧（リスト）表示」再現用モデル
 
 import SwiftUI
 
@@ -33,6 +33,9 @@ enum CalendarCategory: String, CaseIterable {
 // MARK: - 1件のイベント
 
 struct CalendarEvent: Identifiable {
+
+    // MARK: - Property
+
     let id = UUID()
     let title: String
     let location: String?
@@ -40,6 +43,14 @@ struct CalendarEvent: Identifiable {
     let startDate: Date
     let endDate: Date
     let isAllDay: Bool
+
+    // DateFormatterは生成コストが高いのでstaticで使い回す（計算プロパティ毎の再生成を避ける）
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.dateFormat = "H:mm"
+        return formatter
+    }()
 
     // 開始時刻の表示文字列（例: 9:00）
     var startTimeText: String {
@@ -50,42 +61,44 @@ struct CalendarEvent: Identifiable {
     var endTimeText: String {
         Self.timeFormatter.string(from: endDate)
     }
-
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "H:mm"
-        return formatter
-    }()
 }
 
 // MARK: - 日付ごとにまとめたイベント群（一覧表示のセクション単位）
 
 struct CalendarDay: Identifiable {
+
+    // MARK: - Property
+
     let id = UUID()
     let date: Date
     let events: [CalendarEvent]
 
-    private static let calendar: Calendar = {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "ja_JP")
-        return calendar
+    // 共有Calendarを参照する（個別生成しない）
+    private static let calendar = CalendarFactory.shared
+
+    // 曜日・日にち表示のDateFormatterも使い回す（詳細はtimeFormatterと同じ理由）
+    private static let weekdayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.dateFormat = "EEE"
+        return formatter
+    }()
+
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.dateFormat = "d"
+        return formatter
     }()
 
     // 曜日（例: 金）
     var weekdayText: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "EEE"
-        return formatter.string(from: date)
+        Self.weekdayFormatter.string(from: date)
     }
 
     // 日にち（例: 19）
     var dayText: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "d"
-        return formatter.string(from: date)
+        Self.dayFormatter.string(from: date)
     }
 
     // 本日かどうか
