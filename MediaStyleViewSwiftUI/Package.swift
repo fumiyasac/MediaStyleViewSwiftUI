@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.3
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -19,5 +19,7 @@ let package = Package(
         .testTarget(
             name: "AppFeatureTests",
             dependencies: ["AppFeature"]),
-    ]
+    ],
+    // Swift 6 言語モードでビルドし、strict concurrencyの検査を有効にする
+    swiftLanguageModes: [.v6]
 )
