@@ -124,11 +124,6 @@ public struct CalendarMonthScreen: View {
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button {
-                        // NOTE: 受信ボックス想定（現状の非動作ボタンを維持）
-                    } label: {
-                        Image(systemName: "tray")
-                    }
-                    Button {
                         // NOTE: イベント追加想定（現状の非動作ボタンを維持）
                     } label: {
                         Image(systemName: "plus")

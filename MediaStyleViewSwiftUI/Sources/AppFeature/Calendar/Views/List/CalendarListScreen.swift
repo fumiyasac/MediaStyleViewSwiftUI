@@ -37,11 +37,6 @@ public struct CalendarListScreen: View {
         return Self.titleFormatter.string(from: first.date)
     }
 
-    // 左上の戻るボタンに出す年。ハードコードせず表示データの先頭から導出する
-    // （データが無い場合は当年にフォールバックする）
-    private var yearText: String {
-        Self.yearFormatter.string(from: days.first?.date ?? Date())
-    }
 
     // 検索文字列でイベントを絞り込んだ結果
     private var filteredDays: [CalendarDay] {
@@ -77,27 +72,9 @@ public struct CalendarListScreen: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .searchable(text: $searchText, prompt: "検索")
                 .toolbar {
-                    // 左上: 年表示（Apple純正の戻る導線に相当）
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            // NOTE: 年表示への遷移想定
-                        } label: {
-                            HStack(spacing: 2) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 16, weight: .semibold))
-                                Text(yearText)
-                            }
-                            .foregroundStyle(CalendarTheme.accent)
-                        }
-                    }
 
                     // 右上: 受信/追加ボタン（下部はタブバーと競合するため上部へ集約）
                     ToolbarItemGroup(placement: .topBarTrailing) {
-                        Button {
-                            // NOTE: 受信ボックス想定
-                        } label: {
-                            Image(systemName: "tray")
-                        }
                         Button {
                             // NOTE: イベント追加想定
                         } label: {
