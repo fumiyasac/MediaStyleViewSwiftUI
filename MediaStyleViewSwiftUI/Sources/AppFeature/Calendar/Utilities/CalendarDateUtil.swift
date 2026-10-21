@@ -7,6 +7,7 @@
 
 // 日付の表示判定。データソースは引数で受け取り、Fixture（CalendarSampleData）に依存させない。
 
+import CalculateCalendarLogic
 import Foundation
 
 enum CalendarDateUtil {
@@ -36,6 +37,20 @@ enum CalendarDateUtil {
     // 土曜かどうか（曜日カラー切り替え用）
     static func isSaturday(_ date: Date) -> Bool {
         calendar.component(.weekday, from: date) == 7
+    }
+
+    // 日本の祝祭日かどうか。自作パッケージCalculateCalendarLogicに判定を委ねる。
+    // CalculateCalendarLogicは状態を持たないstructで生成コストが無いため、都度生成して使う。
+    static func isHoliday(_ date: Date) -> Bool {
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        guard
+            let year = components.year,
+            let month = components.month,
+            let day = components.day
+        else {
+            return false
+        }
+        return CalculateCalendarLogic().judgeJapaneseHoliday(year: year, month: month, day: day)
     }
 
     // 2つの日付が同一日かどうか

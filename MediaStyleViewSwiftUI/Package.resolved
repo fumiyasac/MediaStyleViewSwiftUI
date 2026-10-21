@@ -1,0 +1,15 @@
+{
+  "originHash" : "51cf9069976329e8b88e6002ad8781aecc55053d1513c67d1c2277b77e11d1fb",
+  "pins" : [
+    {
+      "identity" : "handmadecalendaradvance",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/fumiyasac/handMadeCalendarAdvance",
+      "state" : {
+        "revision" : "3e08683c6ab1874558d4cac4b9aaf76b73b8db44",
+        "version" : "0.8.2"
+      }
+    }
+  ],
+  "version" : 3
+}

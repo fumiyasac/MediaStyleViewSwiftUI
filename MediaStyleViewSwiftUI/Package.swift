@@ -13,9 +13,16 @@ let package = Package(
         .library(name: "AppFeature", targets: ["AppFeature"])
     ],
     dependencies: [
+        // 祝祭日判定に自作パッケージ CalculateCalendarLogic を利用する
+        .package(url: "https://github.com/fumiyasac/handMadeCalendarAdvance", from: "0.8.2"),
     ],
     targets: [
-        .target(name: "AppFeature"),
+        .target(
+            name: "AppFeature",
+            dependencies: [
+                .product(name: "CalculateCalendarLogic", package: "handMadeCalendarAdvance"),
+            ]
+        ),
         .testTarget(
             name: "AppFeatureTests",
             dependencies: ["AppFeature"]),

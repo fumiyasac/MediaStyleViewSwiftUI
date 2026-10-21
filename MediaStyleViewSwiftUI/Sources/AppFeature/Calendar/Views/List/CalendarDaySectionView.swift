@@ -60,14 +60,17 @@ struct CalendarDaySectionView: View {
 
     // MARK: - Private Function
 
-    // 曜日ラベルの色。本日は日曜と同じ赤扱いにし、以降は平日.secondary基準で共通解決する
-    // （本日の日にち自体は上の赤丸＋白抜きで表現するため、ここでは色のみ）
+    // 曜日ラベルの色。本日は日曜と同じ赤扱いにし、以降は祝日/日曜=赤・土曜=青・平日.secondaryを
+    // 共通ロジックで解決する（本日の日にち自体は上の赤丸＋白抜きで表現するため、ここでは色のみ）
     private var weekdayColor: Color {
         if day.isToday {
             return CalendarTheme.accent
         }
         return CalendarTheme.weekdayColor(
-            isSunday: day.isSunday, isSaturday: day.isSaturday, default: .secondary
+            isSunday: day.isSunday,
+            isSaturday: day.isSaturday,
+            isHoliday: CalendarDateUtil.isHoliday(day.date),
+            default: .secondary
         )
     }
 }
