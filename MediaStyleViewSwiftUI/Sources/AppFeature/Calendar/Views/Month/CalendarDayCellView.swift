@@ -18,6 +18,7 @@ struct CalendarDayCellView: View {
     let isToday: Bool
     let isSunday: Bool
     let isSaturday: Bool
+    let isHoliday: Bool
 
     // MARK: - Body
 
@@ -50,13 +51,14 @@ struct CalendarDayCellView: View {
 
     // MARK: - Private Function
 
-    // 日にちの文字色。本日だけは赤丸に重ねる白抜きにし、それ以外は平日.primary基準で共通解決する
+    // 日にちの文字色。本日だけは赤丸に重ねる白抜きにし、それ以外は祝日/日曜=赤・土曜=青・
+    // 平日.primaryを共通ロジックで解決する
     private var dayColor: Color {
         if isToday {
             return .white
         }
         return CalendarTheme.weekdayColor(
-            isSunday: isSunday, isSaturday: isSaturday, default: .primary
+            isSunday: isSunday, isSaturday: isSaturday, isHoliday: isHoliday, default: .primary
         )
     }
 }

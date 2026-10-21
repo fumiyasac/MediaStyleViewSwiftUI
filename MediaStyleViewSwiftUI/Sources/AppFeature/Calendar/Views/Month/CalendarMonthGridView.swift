@@ -31,7 +31,8 @@ struct CalendarMonthGridView: View {
                         categories: CalendarDateUtil.categories(on: date, in: days),
                         isToday: CalendarDateUtil.isToday(date),
                         isSunday: CalendarDateUtil.isSunday(date),
-                        isSaturday: CalendarDateUtil.isSaturday(date)
+                        isSaturday: CalendarDateUtil.isSaturday(date),
+                        isHoliday: CalendarDateUtil.isHoliday(date)
                     )
                 } else {
                     // 月初前・月末後の余白セル（日セルと同じ高さの空白を置いて桁を揃える）

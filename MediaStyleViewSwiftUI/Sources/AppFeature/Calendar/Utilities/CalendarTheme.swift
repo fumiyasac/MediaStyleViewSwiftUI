@@ -20,14 +20,16 @@ enum CalendarTheme {
 
     // MARK: - Function
 
-    // 曜日に応じた文字色を返す（日曜=赤 / 土曜=青 / それ以外=defaultColor）。
+    // 曜日・祝祭日に応じた文字色を返す（日曜/祝日=赤 / 土曜=青 / それ以外=defaultColor）。
+    // 祝祭日は日本の慣習・Apple純正と同じく日曜と同じ赤扱いにする。
     // 一覧は平日を.secondary、月セルは平日を.primaryにする差があるため、
     // 既定色を引数で受け取って共通化しつつ違いを保つ。
     // 本日の強調（赤文字や白抜き）は表示側の事情が異なるため呼び出し側に委ねる。
+    // isHolidayは曜日ヘッダーなど日付を持たない呼び出しでは既定falseのままにする。
     static func weekdayColor(
-        isSunday: Bool, isSaturday: Bool, default defaultColor: Color
+        isSunday: Bool, isSaturday: Bool, isHoliday: Bool = false, default defaultColor: Color
     ) -> Color {
-        if isSunday {
+        if isSunday || isHoliday {
             return accent
         } else if isSaturday {
             return saturday
