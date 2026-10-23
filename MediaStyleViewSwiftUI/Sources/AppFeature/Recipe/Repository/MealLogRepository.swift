@@ -34,9 +34,30 @@ protocol MealLogRepository: Sendable {
     // 既存ログを削除する。対象が無ければnotFoundを投げる
     func delete(id: MealLogID) async throws
 
+    // IDで1件取得する（無ければnil）
+    func summary(for id: MealLogID) async throws -> MealLogSummary?
+
     // 指定した暦日のログ要約を返す
     func summaries(for dateKey: DateKey) async throws -> [MealLogSummary]
 
+    // 指定した暦日キーの期間(閉区間)のログ要約を返す
+    func summaries(in range: ClosedRange<DateKey>) async throws -> [MealLogSummary]
+
     // 全ログの要約を返す
     func allSummaries() async throws -> [MealLogSummary]
+}
+
+// MARK: - Default Implementation
+
+// 既存実装(InMemoryMealLogRepository)を変更せずに済むよう、新規の取得系は
+// allSummaries()を使った既定実装を用意する。SwiftData実装では効率的なクエリで上書きする。
+extension MealLogRepository {
+
+    func summary(for id: MealLogID) async throws -> MealLogSummary? {
+        try await allSummaries().first { $0.id == id }
+    }
+
+    func summaries(in range: ClosedRange<DateKey>) async throws -> [MealLogSummary] {
+        try await allSummaries().filter { range.contains($0.dateKey) }
+    }
 }
