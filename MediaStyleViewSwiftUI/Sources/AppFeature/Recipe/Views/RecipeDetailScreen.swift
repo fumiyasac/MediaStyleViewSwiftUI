@@ -113,6 +113,7 @@ struct RecipeDetailScreen: View {
                         mealLogs: mealLogs,
                         onAddTap: { showEditor = true }
                     )
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color(.systemBackground))
                     .clipShape(.rect(topLeadingRadius: 24, topTrailingRadius: 24))
                 }
@@ -210,7 +211,6 @@ private struct RecipeDetailContent: View {
             addMealLogButton
         }
         .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var metaRow: some View {

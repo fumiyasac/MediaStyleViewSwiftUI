@@ -44,11 +44,14 @@ struct RecipeHeroView: View {
         // 上スクロール時は本文より緩やかに上へ逃がす（遅延）
         let parallaxShift = reduceMotion ? 0 : -(max(0, scrollOffset) * parallaxFactor)
 
-        heroContent
+        // レイアウト幅はColor.clearで画面幅に固定し、画像(scaledToFill)はoverlayで描画してclipする。
+        // これによりHeroがScrollViewの幅を押し広げず、本文の左右余白が保たれる。
+        Color.clear
             .frame(maxWidth: .infinity)
             .frame(height: expandedHeight + stretch, alignment: .top)
-            .offset(y: parallaxShift)
+            .overlay { heroContent }
             .clipped()
+            .offset(y: parallaxShift)
     }
 
     // MARK: - Private View
