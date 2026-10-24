@@ -70,9 +70,14 @@ struct Recipe: Identifiable, Hashable, Sendable {
     let calories: Int
     // 標準の盛り付け人数
     let servings: Int
+    // 材料（Detail表示用。各要素は「材料名 分量」程度の自由文）
+    let ingredients: [String]
+    // 調理手順（Detail表示用。順序は配列の並び）
+    let steps: [String]
 
     // MARK: - Initializer
 
+    // ingredients/stepsは既定を空配列にして、既存の生成箇所を壊さない
     init(
         id: RecipeID,
         title: String,
@@ -80,7 +85,9 @@ struct Recipe: Identifiable, Hashable, Sendable {
         category: RecipeCategory,
         cookingMinutes: Int,
         calories: Int,
-        servings: Int
+        servings: Int,
+        ingredients: [String] = [],
+        steps: [String] = []
     ) {
         self.id = id
         self.title = title
@@ -89,5 +96,7 @@ struct Recipe: Identifiable, Hashable, Sendable {
         self.cookingMinutes = cookingMinutes
         self.calories = calories
         self.servings = servings
+        self.ingredients = ingredients
+        self.steps = steps
     }
 }
