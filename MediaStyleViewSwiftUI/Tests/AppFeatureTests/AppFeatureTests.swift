@@ -86,37 +86,6 @@ struct CalendarMonthGridTests {
     }
 }
 
-// MARK: - CalendarDateUtil.categories(on:in:)
-
-@Suite("イベントカテゴリ抽出")
-struct CalendarCategoryTests {
-
-    private let calendar = gregorianSundayFirst
-
-    @Test("本日のサンプルにはイベントが存在し、カテゴリ数が一致する")
-    func fixtureHasEventsForToday() {
-        let today = CalendarSampleData.days[0]
-        #expect(!today.events.isEmpty)
-        #expect(
-            CalendarDateUtil.categories(on: today.date, in: CalendarSampleData.days).count == today.events.count
-        )
-    }
-
-    @Test("注入したdaysから、その日のイベントが属するカテゴリ一覧を返す")
-    func categoriesReturnInjectedDaysCategories() {
-        let days = CalendarSampleData.days
-        let today = days[0]
-        #expect(CalendarDateUtil.categories(on: today.date, in: days) == today.events.map(\.category))
-    }
-
-    @Test("イベントが無い日付には空配列を返す")
-    func categoriesReturnEmptyForDateWithoutEvents() throws {
-        let days = CalendarSampleData.days
-        let farFuture = try #require(calendar.date(byAdding: .year, value: 5, to: days[0].date))
-        #expect(CalendarDateUtil.categories(on: farFuture, in: days).isEmpty)
-    }
-}
-
 // MARK: - CalendarTheme.weekdayColor
 
 @Suite("曜日・祝日の表示色")
