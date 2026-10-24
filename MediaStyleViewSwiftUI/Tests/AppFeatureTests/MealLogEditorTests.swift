@@ -6,10 +6,11 @@
 //
 
 // MealLog EditorのReducer遷移とViewModelの保存フロー（成功/失敗/再試行/二重保存抑制/キャンセル）のテスト。
+// Swift Testing へ移行済み。Repository Stubはactorで並列安全、同期待ちはsaveTaskのawaitで行う。
 
 @testable import AppFeature
 import Foundation
-import XCTest
+import Testing
 
 // 保存挙動を差し込めるMealLogRepository Stub（actorでSendable）。
 private actor StubMealLogRepository: MealLogRepository {
@@ -71,7 +72,8 @@ private func day(_ y: Int, _ m: Int, _ d: Int) -> Date {
 
 // MARK: - Reducer
 
-final class MealLogEditorReducerTests: XCTestCase {
+@Suite("MealLog Editorの状態遷移")
+struct MealLogEditorReducerTests {
 
     private let reducer = MealLogEditorReducer()
 
@@ -80,65 +82,72 @@ final class MealLogEditorReducerTests: XCTestCase {
     }
 
     // 6. 正常入力で保存Effectが生成される
-    func testBeginSavingProducesSaveEffect() {
+    @Test("正常入力で保存Effectが生成される")
+    func beginSavingProducesSaveEffect() {
         let id = UUID()
         let transition = reducer.reduce(state: editing(), action: .beginSaving(requestID: id))
-        XCTAssertEqual(transition.state.status, .saving(requestID: id))
-        XCTAssertEqual(transition.effects.count, 1)
+        #expect(transition.state.status == .saving(requestID: id))
+        #expect(transition.effects.count == 1)
     }
 
     // 9. 保存中の連続タップで二重保存されない（2回目のbeginSavingはEffectを出さない）
-    func testDoubleBeginSavingSuppressed() {
+    @Test("保存中の連続タップで二重保存されない")
+    func doubleBeginSavingSuppressed() {
         let first = reducer.reduce(state: editing(), action: .beginSaving(requestID: UUID()))
         let second = reducer.reduce(state: first.state, action: .beginSaving(requestID: UUID()))
-        XCTAssertTrue(second.effects.isEmpty)
-        XCTAssertEqual(second.state, first.state)
+        #expect(second.effects.isEmpty)
+        #expect(second.state == first.state)
     }
 
     // 10. 保存成功で成功状態へ遷移する
-    func testSaveSucceeded() {
+    @Test("保存成功で成功状態へ遷移する")
+    func saveSucceeded() {
         let id = UUID()
         let saving = reducer.reduce(state: editing(), action: .beginSaving(requestID: id)).state
         let summary = MealLogSummary(id: MealLogID(), recipeID: RecipeID("recipe-01"), dateKey: DateKey(value: "2026-03-10"), cookedAt: day(2026, 3, 10), rating: 3, memo: "", servings: 1)
         let transition = reducer.reduce(state: saving, action: .saveSucceeded(requestID: id, summary: summary))
-        XCTAssertEqual(transition.state.savedSummary, summary)
+        #expect(transition.state.savedSummary == summary)
     }
 
     // 11. 保存失敗でエラー状態となり入力内容が維持される
-    func testSaveFailedKeepsInput() {
+    @Test("保存失敗でエラー状態となり入力内容が維持される")
+    func saveFailedKeepsInput() {
         let id = UUID()
         var state = editing()
         state = reducer.reduce(state: state, action: .setMemo("作った")).state
         state = reducer.reduce(state: state, action: .beginSaving(requestID: id)).state
         let failed = reducer.reduce(state: state, action: .saveFailed(requestID: id, message: "失敗")).state
-        XCTAssertEqual(failed.errorMessage, "失敗")
-        XCTAssertEqual(failed.memo, "作った")
+        #expect(failed.errorMessage == "失敗")
+        #expect(failed.memo == "作った")
     }
 
     // 12. 保存失敗後に再試行できる（failedからbeginSavingでsavingへ）
-    func testRetryAfterFailure() {
+    @Test("保存失敗後に再試行できる")
+    func retryAfterFailure() {
         let id1 = UUID()
         let saving = reducer.reduce(state: editing(), action: .beginSaving(requestID: id1)).state
         let failed = reducer.reduce(state: saving, action: .saveFailed(requestID: id1, message: "失敗")).state
         let id2 = UUID()
         let retry = reducer.reduce(state: failed, action: .beginSaving(requestID: id2))
-        XCTAssertEqual(retry.state.status, .saving(requestID: id2))
-        XCTAssertEqual(retry.effects.count, 1)
+        #expect(retry.state.status == .saving(requestID: id2))
+        #expect(retry.effects.count == 1)
     }
 
     // 古いrequestIDの完了は無視される
-    func testStaleCompletionIgnored() {
+    @Test("古いrequestIDの完了は無視される")
+    func staleCompletionIgnored() {
         let id = UUID()
         let saving = reducer.reduce(state: editing(), action: .beginSaving(requestID: id)).state
         let stale = reducer.reduce(state: saving, action: .saveFailed(requestID: UUID(), message: "x"))
-        XCTAssertEqual(stale.state, saving)
+        #expect(stale.state == saving)
     }
 }
 
 // MARK: - ViewModel
 
 @MainActor
-final class MealLogEditorViewModelTests: XCTestCase {
+@Suite("MealLog Editorの保存フロー")
+struct MealLogEditorViewModelTests {
 
     private func makeViewModel(_ repository: any MealLogRepository, rating: Int = 4, memo: String = "") -> MealLogEditorViewModel {
         MealLogEditorViewModel(
@@ -148,53 +157,58 @@ final class MealLogEditorViewModelTests: XCTestCase {
     }
 
     // 8. メモが空でも保存できる
-    func testSaveWithEmptyMemo() async throws {
+    @Test("メモが空でも保存できる")
+    func saveWithEmptyMemo() async throws {
         let viewModel = makeViewModel(StubMealLogRepository([.success]), memo: "")
         viewModel.send(.save)
         await viewModel.saveTask?.value
-        XCTAssertNotNil(viewModel.state.savedSummary)
+        #expect(viewModel.state.savedSummary != nil)
     }
 
     // 7. 評価が範囲外なら保存できない（Repository検証で失敗になる）
-    func testInvalidRatingCannotSave() async throws {
+    @Test("評価が範囲外なら保存できない")
+    func invalidRatingCannotSave() async throws {
         let viewModel = makeViewModel(StubMealLogRepository([.success]), rating: 7)
         viewModel.send(.save)
         await viewModel.saveTask?.value
-        XCTAssertNil(viewModel.state.savedSummary)
-        XCTAssertNotNil(viewModel.state.errorMessage)
+        #expect(viewModel.state.savedSummary == nil)
+        #expect(viewModel.state.errorMessage != nil)
     }
 
     // 11. 失敗でエラー状態・入力維持、12. 再試行で成功
-    func testFailureThenRetrySucceeds() async throws {
+    @Test("失敗でエラー状態・入力維持し、再試行で成功する")
+    func failureThenRetrySucceeds() async throws {
         let repository = StubMealLogRepository([.failure(message: "通信失敗"), .success])
         let viewModel = makeViewModel(repository)
 
         viewModel.send(.save)
         await viewModel.saveTask?.value
-        XCTAssertEqual(viewModel.state.errorMessage, "通信失敗")
+        #expect(viewModel.state.errorMessage == "通信失敗")
 
         viewModel.send(.save)   // 再試行
         await viewModel.saveTask?.value
-        XCTAssertNotNil(viewModel.state.savedSummary)
+        #expect(viewModel.state.savedSummary != nil)
     }
 
     // 13. キャンセルされた処理を保存エラーとして誤表示しない
-    func testCancelledNotShownAsError() async throws {
+    @Test("キャンセルを保存エラーとして誤表示しない")
+    func cancelledNotShownAsError() async throws {
         let viewModel = makeViewModel(StubMealLogRepository([.cancelled]))
         viewModel.send(.save)
         await viewModel.saveTask?.value
-        XCTAssertNil(viewModel.state.errorMessage)
-        XCTAssertNil(viewModel.state.savedSummary)
+        #expect(viewModel.state.errorMessage == nil)
+        #expect(viewModel.state.savedSummary == nil)
     }
 
     // 9. 連続タップで二重保存されない（addは1回だけ）
-    func testDoubleTapDoesNotDoubleSave() async throws {
+    @Test("連続タップで二重保存されない")
+    func doubleTapDoesNotDoubleSave() async throws {
         let repository = StubMealLogRepository([.success])
         let viewModel = makeViewModel(repository)
         viewModel.send(.save)
         viewModel.send(.save)   // 保存中の2回目は抑制される
         await viewModel.saveTask?.value
         let count = await repository.addCallCount
-        XCTAssertEqual(count, 1)
+        #expect(count == 1)
     }
 }
