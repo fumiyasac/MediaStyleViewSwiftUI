@@ -23,7 +23,6 @@ struct CalendarMonthScreen: View {
     private let monthOffsets = Array(-1200...1200)
 
     private let isActive: Bool
-    private let days: [CalendarDay]
     // StateMachine。Rootが所有し共有する（画面再描画で再生成しない）
     private let viewModel: CalendarViewModel
     // Recipe Detail / MealLog Editor へ渡す依存
@@ -55,14 +54,12 @@ struct CalendarMonthScreen: View {
     // MARK: - Initializer
 
     init(
-        days: [CalendarDay],
         isActive: Bool,
         viewModel: CalendarViewModel,
         recipeRepository: any RecipeRepository,
         mealLogRepository: any MealLogRepository,
         onMealLogSaved: @escaping (MealLogSummary) -> Void
     ) {
-        self.days = days
         self.isActive = isActive
         self.viewModel = viewModel
         self.recipeRepository = recipeRepository
@@ -85,7 +82,6 @@ struct CalendarMonthScreen: View {
                                 if let grid = CalendarMonthGrid(baseMonth: baseMonth, offset: offset) {
                                     CalendarMonthView(
                                         grid: grid,
-                                        days: days,
                                         state: viewModel.state,
                                         onSelectDate: handleSelectDate
                                     )
@@ -148,7 +144,7 @@ struct CalendarMonthScreen: View {
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button {
-                        // NOTE: イベント追加想定（現状の非動作ボタンを維持）
+                        // NOTE: 追加アクション用のプレースホルダ（現状の非動作ボタンを維持）
                     } label: {
                         Image(systemName: "plus")
                     }

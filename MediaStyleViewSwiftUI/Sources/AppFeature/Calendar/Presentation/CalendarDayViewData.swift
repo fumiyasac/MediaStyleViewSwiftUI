@@ -7,7 +7,7 @@
 
 // 1日分のセル表示専用の値型。CalendarDayCellViewがDomain ModelやState/Repositoryの
 // 内部構造を知らずに描画できるよう、表示に必要な判定結果だけをフラットに持つ。
-// 既存の曜日判定・イベントドット情報も破棄せず引き継ぐ。
+// Calendarの責務はRecipeとMealLogに一本化したため、旧イベント（work/health等）のカテゴリは持たない。
 //
 // 注意:
 //  - hasRecipe: その日に「レシピ掲載がある」か（DailyRecipeEntry.dateKey一致）
@@ -30,8 +30,6 @@ struct CalendarDayViewData: Sendable, Equatable {
     let isSunday: Bool
     let isSaturday: Bool
     let isHoliday: Bool
-    // 既存イベントドット（CalendarSampleData由来のカテゴリ）
-    let eventCategories: [CalendarCategory]
     // レシピ掲載日マーカー
     let hasRecipe: Bool
     // 調理記録マーカー
@@ -40,7 +38,7 @@ struct CalendarDayViewData: Sendable, Equatable {
 
 // MARK: - CalendarDayViewDataFactory
 
-// State(月ごとのRecipe/MealLog)と既存イベント配列から、セル表示用の値型を組み立てるPresentation層のFactory。
+// State(月ごとのRecipe/MealLog)から、セル表示用の値型を組み立てるPresentation層のFactory。
 // 日付キーの導出はCalendar(TimeZone内包)を一元化して行い、Fixture/SwiftData側のキーと突き合わせる。
 struct CalendarDayViewDataFactory {
 
@@ -59,11 +57,9 @@ struct CalendarDayViewDataFactory {
 
     // 指定日のセル表示データを組み立てる。
     // - state: 月ごとのRecipe/MealLog読込結果と選択中日付
-    // - events: 既存イベントドットの供給元(CalendarSampleData由来のCalendarDay配列)
     func make(
         date: Date,
-        state: CalendarFeatureState,
-        events: [CalendarDay]
+        state: CalendarFeatureState
     ) -> CalendarDayViewData {
         let dateKey = DateKey(date: date, calendar: calendar)
         let monthKey = MonthKey(date: date, calendar: calendar)
@@ -77,7 +73,6 @@ struct CalendarDayViewDataFactory {
             isSunday: CalendarDateUtil.isSunday(date),
             isSaturday: CalendarDateUtil.isSaturday(date),
             isHoliday: CalendarDateUtil.isHoliday(date),
-            eventCategories: CalendarDateUtil.categories(on: date, in: events),
             hasRecipe: load.recipeEntries.contains { $0.dateKey == dateKey },
             hasMealLog: load.mealLogs.contains { $0.dateKey == dateKey }
         )

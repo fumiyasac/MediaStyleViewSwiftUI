@@ -21,7 +21,6 @@ public struct CalendarFeatureDependencies: Sendable {
     let timelineUseCase: any TimelineUseCase
     let recipeRepository: any RecipeRepository
     let mealLogRepository: any MealLogRepository
-    let days: [CalendarDay]
 
     // MARK: - Initializer
 
@@ -39,7 +38,6 @@ public struct CalendarFeatureDependencies: Sendable {
             recipeRepository: recipeRepository,
             mealLogRepository: mealLogRepository
         )
-        self.days = CalendarSampleData.days
     }
 
     // 本番構成。Recipe=Fixture、MealLog=SwiftData(永続)。SwiftData生成失敗時はInMemoryへフォールバック。

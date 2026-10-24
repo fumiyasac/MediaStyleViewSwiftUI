@@ -18,7 +18,6 @@ struct CalendarRootView: View {
 
     // MARK: - Property
 
-    private let days: [CalendarDay]
     private let recipeRepository: any RecipeRepository
     private let mealLogRepository: any MealLogRepository
 
@@ -29,14 +28,12 @@ struct CalendarRootView: View {
     // MARK: - Initializer
 
     init(
-        days: [CalendarDay],
         calendarUseCase: any CalendarUseCase,
         timelineUseCase: any TimelineUseCase,
         recipeRepository: any RecipeRepository,
         mealLogRepository: any MealLogRepository,
         referenceDate: Date = Date()
     ) {
-        self.days = days
         self.recipeRepository = recipeRepository
         self.mealLogRepository = mealLogRepository
         _viewModel = State(
@@ -55,7 +52,6 @@ struct CalendarRootView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             CalendarMonthScreen(
-                days: days,
                 isActive: selectedTab == .month,
                 viewModel: viewModel,
                 recipeRepository: recipeRepository,
@@ -96,7 +92,6 @@ struct CalendarRootView: View {
 #Preview {
     let dependencies = CalendarFeatureDependencies.inMemory()
     return CalendarRootView(
-        days: dependencies.days,
         calendarUseCase: dependencies.calendarUseCase,
         timelineUseCase: dependencies.timelineUseCase,
         recipeRepository: dependencies.recipeRepository,

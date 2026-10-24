@@ -43,7 +43,7 @@ struct CalendarDayViewDataTests {
     func hasRecipe() {
         let target = date(2026, 3, 10)
         let s = state(monthKey: "2026-03", entries: [entry("2026-03-10")], selected: target)
-        let vd = factory.make(date: target, state: s, events: [])
+        let vd = factory.make(date: target, state: s)
         #expect(vd.hasRecipe)
         #expect(!vd.hasMealLog)
     }
@@ -53,7 +53,7 @@ struct CalendarDayViewDataTests {
     func hasMealLog() {
         let target = date(2026, 3, 10)
         let s = state(monthKey: "2026-03", logs: [mealLog("2026-03-10")], selected: target)
-        let vd = factory.make(date: target, state: s, events: [])
+        let vd = factory.make(date: target, state: s)
         #expect(vd.hasMealLog)
         #expect(!vd.hasRecipe)
     }
@@ -63,20 +63,30 @@ struct CalendarDayViewDataTests {
     func recipeAndMealLogOnDifferentDays() {
         let s = state(monthKey: "2026-03", entries: [entry("2026-03-05")], logs: [mealLog("2026-03-20")], selected: date(2026, 3, 1))
 
-        let recipeDay = factory.make(date: date(2026, 3, 5), state: s, events: [])
+        let recipeDay = factory.make(date: date(2026, 3, 5), state: s)
         #expect(recipeDay.hasRecipe)
         #expect(!recipeDay.hasMealLog)
 
-        let mealLogDay = factory.make(date: date(2026, 3, 20), state: s, events: [])
+        let mealLogDay = factory.make(date: date(2026, 3, 20), state: s)
         #expect(!mealLogDay.hasRecipe)
         #expect(mealLogDay.hasMealLog)
+    }
+
+    // 同日にRecipe掲載とMealLog調理記録が両方ある場合、両マーカーが立つ
+    @Test("同日にRecipeとMealLogが両方あると両マーカーが立つ")
+    func recipeAndMealLogSameDay() {
+        let target = date(2026, 3, 10)
+        let s = state(monthKey: "2026-03", entries: [entry("2026-03-10")], logs: [mealLog("2026-03-10")], selected: target)
+        let vd = factory.make(date: target, state: s)
+        #expect(vd.hasRecipe)
+        #expect(vd.hasMealLog)
     }
 
     // 14. Recipeが0件でもViewDataを生成できる
     @Test("Recipeが0件でもViewDataを生成できる")
     func emptyStateProducesViewData() {
         let target = date(2026, 3, 10)
-        let vd = factory.make(date: target, state: .initial(referenceDate: target), events: [])
+        let vd = factory.make(date: target, state: .initial(referenceDate: target))
         #expect(!vd.hasRecipe)
         #expect(!vd.hasMealLog)
         #expect(vd.dayNumber == 10)
@@ -87,7 +97,7 @@ struct CalendarDayViewDataTests {
     func multipleRecipesSameDay() {
         let target = date(2026, 3, 10)
         let s = state(monthKey: "2026-03", entries: [entry("2026-03-10"), entry("2026-03-10")], selected: target)
-        let vd = factory.make(date: target, state: s, events: [])
+        let vd = factory.make(date: target, state: s)
         #expect(vd.hasRecipe)
     }
 
@@ -96,7 +106,7 @@ struct CalendarDayViewDataTests {
     func multipleMealLogsSameDay() {
         let target = date(2026, 3, 10)
         let s = state(monthKey: "2026-03", logs: [mealLog("2026-03-10"), mealLog("2026-03-10")], selected: target)
-        let vd = factory.make(date: target, state: s, events: [])
+        let vd = factory.make(date: target, state: s)
         #expect(vd.hasMealLog)
     }
 
@@ -105,15 +115,15 @@ struct CalendarDayViewDataTests {
     func monthBoundaryAndYearCrossing() {
         // 2026-12-31 と 2027-01-01 でそれぞれ別のMonthKeyを引く
         let decState = state(monthKey: "2026-12", entries: [entry("2026-12-31")], selected: date(2026, 12, 31))
-        let dec31 = factory.make(date: date(2026, 12, 31), state: decState, events: [])
+        let dec31 = factory.make(date: date(2026, 12, 31), state: decState)
         #expect(dec31.hasRecipe)
 
         let janState = state(monthKey: "2027-01", entries: [entry("2027-01-01")], selected: date(2027, 1, 1))
-        let jan1 = factory.make(date: date(2027, 1, 1), state: janState, events: [])
+        let jan1 = factory.make(date: date(2027, 1, 1), state: janState)
         #expect(jan1.hasRecipe)
 
         // 12月のStateで1月を引いても誤検知しない（別MonthKey）
-        let jan1WithDecState = factory.make(date: date(2027, 1, 1), state: decState, events: [])
+        let jan1WithDecState = factory.make(date: date(2027, 1, 1), state: decState)
         #expect(!jan1WithDecState.hasRecipe)
     }
 
@@ -126,11 +136,11 @@ struct CalendarDayViewDataTests {
 
         // JST基準のFactoryでは 2026-03-10 と解釈し、掲載ありと判定できる
         let jstFactory = CalendarDayViewDataFactory(calendar: tokyo)
-        #expect(jstFactory.make(date: instant, state: s, events: []).hasRecipe)
+        #expect(jstFactory.make(date: instant, state: s).hasRecipe)
 
         // UTC基準のFactoryでは 2026-03-09 と解釈するため掲載なし
         let utcFactory = CalendarDayViewDataFactory(calendar: utc)
-        #expect(!utcFactory.make(date: instant, state: s, events: []).hasRecipe)
+        #expect(!utcFactory.make(date: instant, state: s).hasRecipe)
     }
 
     // 選択状態・今日判定が反映される
@@ -138,7 +148,7 @@ struct CalendarDayViewDataTests {
     func selectionFlag() {
         let target = date(2026, 3, 10)
         let s = state(monthKey: "2026-03", selected: target)
-        #expect(factory.make(date: target, state: s, events: []).isSelected)
-        #expect(!factory.make(date: date(2026, 3, 11), state: s, events: []).isSelected)
+        #expect(factory.make(date: target, state: s).isSelected)
+        #expect(!factory.make(date: date(2026, 3, 11), state: s).isSelected)
     }
 }
