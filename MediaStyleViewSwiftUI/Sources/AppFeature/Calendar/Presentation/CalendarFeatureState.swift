@@ -6,36 +6,51 @@
 //
 
 // Calendar FeatureのState。View表示に必要な値だけを持つSendableな値型。
-// 「読み込み中でも表示中の既存データを失わない」ために、データ本体ではなく読込フェーズを
-// enumで表し、loading/failedには直前のデータ(previous)を持たせる。
-// これにより「loadedなのにデータが無い」等の不正な組み合わせを表現しづらくする。
+//
+// 連続スクロールでは複数月が同時に見えるため、単一の読込状態では月Bの読込が月Aを上書きしてしまう。
+// そこでStateは「月キーごとの読込状態 months: [MonthKey: CalendarMonthLoad]」を持ち、
+// 各月が自前のデータ・phase・requestIDを持つことで、別月の読込で他月のデータが消えないようにする。
+// 読込中/失敗でも各月のデータ(recipeEntries/mealLogs)は保持し、表示を失わない。
 
 import Foundation
 
-// MARK: - CalendarEntriesState
+// MARK: - CalendarLoadPhase
 
-// 日別割当の読込フェーズ。各フェーズが必要なデータだけを内包する。
-enum CalendarEntriesState: Sendable, Equatable {
-    // 初期状態（未読込）
+// 月単位の読込フェーズ。
+enum CalendarLoadPhase: Sendable, Equatable {
     case idle
-    // 読み込み中（再読込時は直前のデータを保持して表示を維持する）
-    case loading(previous: [DailyRecipeEntry])
-    // 読み込み成功
-    case loaded([DailyRecipeEntry])
-    // 読み込み失敗（直前のデータは保持し、エラー表示と併存できる）
-    case failed(message: String, previous: [DailyRecipeEntry])
+    case loading
+    case loaded
+    case failed(message: String)
+}
 
-    // いまUIに出すべきデータ（loading/failedでは直前データ、idleでは空）
-    var entries: [DailyRecipeEntry] {
-        switch self {
-        case .idle:
-            return []
-        case let .loading(previous):
-            return previous
-        case let .loaded(entries):
-            return entries
-        case let .failed(_, previous):
-            return previous
+// MARK: - CalendarMonthLoad
+
+// 1ヶ月分の読込状態。データ(recipeEntries/mealLogs)はphaseと分離して保持し、
+// 再読込中も直前のデータを失わない。requestIDはその月の進行中リクエストの照合に使う。
+struct CalendarMonthLoad: Sendable, Equatable {
+
+    var recipeEntries: [DailyRecipeEntry]
+    var mealLogs: [MealLogSummary]
+    var phase: CalendarLoadPhase
+    var requestID: UUID?
+
+    static let empty = CalendarMonthLoad(
+        recipeEntries: [], mealLogs: [], phase: .idle, requestID: nil
+    )
+
+    var isLoading: Bool { phase == .loading }
+
+    var errorMessage: String? {
+        if case let .failed(message) = phase { return message }
+        return nil
+    }
+
+    // 既に読込済み or 読込中なら、新規の読込要求は不要（重複読込・無限読込の抑制に使う）
+    var isActiveOrLoaded: Bool {
+        switch phase {
+        case .loading, .loaded: return true
+        case .idle, .failed: return false
         }
     }
 }
@@ -48,48 +63,26 @@ struct CalendarFeatureState: Sendable, Equatable {
 
     // 選択中の日付
     var selectedDate: Date
-    // 表示対象の月（当月の起点日に正規化して保持）
-    var displayedMonth: Date
-    // 読み込み済みデータと読込フェーズ
-    var entriesState: CalendarEntriesState
-    // 進行中リクエストの識別子（完了Actionの照合に使う）
-    var currentRequestID: UUID?
+    // 月キーごとの読込状態（キャッシュ）
+    var months: [MonthKey: CalendarMonthLoad]
 
     // MARK: - Derived
 
-    // 現在表示すべき日別割当
-    var entries: [DailyRecipeEntry] { entriesState.entries }
-
-    // 読み込み中かどうか
-    var isLoading: Bool {
-        if case .loading = entriesState { return true }
-        return false
-    }
-
-    // エラー表示用メッセージ（失敗時のみ）
-    var errorMessage: String? {
-        if case let .failed(message, _) = entriesState { return message }
-        return nil
+    // 指定月の読込状態（未登録ならempty）
+    func monthLoad(_ key: MonthKey) -> CalendarMonthLoad {
+        months[key] ?? .empty
     }
 
     // MARK: - Factory
 
-    // 初期State。displayedMonthは基準日の当月起点に正規化する。
-    // referenceDateは非決定的なDate()を外から渡すための引数（既定はテストで固定できる）。
-    static func initial(
-        referenceDate: Date,
-        calendar: Calendar = DateKeyCalendar.default
-    ) -> CalendarFeatureState {
-        CalendarFeatureState(
-            selectedDate: referenceDate,
-            displayedMonth: startOfMonth(for: referenceDate, calendar: calendar),
-            entriesState: .idle,
-            currentRequestID: nil
-        )
+    // 初期State。monthsは空（各月はスクロール/表示で順次読み込む）。
+    // referenceDateは非決定的なDate()を外から渡すための引数。
+    static func initial(referenceDate: Date) -> CalendarFeatureState {
+        CalendarFeatureState(selectedDate: referenceDate, months: [:])
     }
 
-    // 指定日が属する月の起点日(1日 0時)を返す
-    static func startOfMonth(for date: Date, calendar: Calendar) -> Date {
+    // 指定日が属する月の起点日(1日 0時)を返す（表示月やmonth引数の正規化に使う）
+    static func startOfMonth(for date: Date, calendar: Calendar = DateKeyCalendar.default) -> Date {
         let components = calendar.dateComponents([.year, .month], from: date)
         return calendar.date(from: components) ?? date
     }
