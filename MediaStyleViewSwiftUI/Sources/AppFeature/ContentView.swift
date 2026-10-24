@@ -26,7 +26,12 @@ public struct ContentView: View {
     // MARK: - Body
 
     public var body: some View {
-        CalendarRootView(days: dependencies.days, useCase: dependencies.useCase)
+        CalendarRootView(
+            days: dependencies.days,
+            calendarUseCase: dependencies.calendarUseCase,
+            recipeRepository: dependencies.recipeRepository,
+            mealLogRepository: dependencies.mealLogRepository
+        )
     }
 }
 

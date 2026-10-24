@@ -85,6 +85,39 @@ struct CalendarReducer: Sendable {
             var newState = state
             newState.months[monthKey] = load
             return CalendarTransition(state: newState, effects: [])
+
+        // 他画面での調理ログ保存/更新をmealLogsへ直接反映する（Design A）。
+        // 月キーはdateKey("yyyy-MM-dd")の先頭7文字から純粋に導出（Date/Calendar非依存）。
+        // 編集で調理日=月が変わるケースに備え、同一idを全月から除いてから対象月へ入れ直す。
+        // 保存結果は確定値なので非同期の再取得を挟まず、古い読込が上書きする余地を作らない。
+        case let .mealLogSaved(summary):
+            var newState = state
+            newState.months = monthsRemovingMealLog(id: summary.id, from: state.months)
+            let monthKey = MonthKey(value: String(summary.dateKey.value.prefix(7)))
+            var load = newState.monthLoad(monthKey)
+            load.mealLogs.append(summary)
+            newState.months[monthKey] = load
+            return CalendarTransition(state: newState, effects: [])
+
+        // 調理ログ削除を全月から反映する
+        case let .mealLogDeleted(id):
+            var newState = state
+            newState.months = monthsRemovingMealLog(id: id, from: state.months)
+            return CalendarTransition(state: newState, effects: [])
         }
+    }
+
+    // MARK: - Private Function
+
+    // 指定idの調理ログを全月のmealLogsから除いた新しいmonthsを返す（純粋関数。&stateは使わない）
+    private func monthsRemovingMealLog(
+        id: MealLogID,
+        from months: [MonthKey: CalendarMonthLoad]
+    ) -> [MonthKey: CalendarMonthLoad] {
+        var result = months
+        for key in result.keys {
+            result[key]?.mealLogs.removeAll { $0.id == id }
+        }
+        return result
     }
 }
