@@ -26,10 +26,17 @@ struct CalendarMonthScreen: View {
     private let days: [CalendarDay]
     // StateMachine。Rootが所有し共有する（画面再描画で再生成しない）
     private let viewModel: CalendarViewModel
+    // Recipe Detail / MealLog Editor へ渡す依存
+    private let recipeRepository: any RecipeRepository
+    private let mealLogRepository: any MealLogRepository
+    // 調理ログ保存結果をCalendarへ通知するクロージャ
+    private let onMealLogSaved: (MealLogSummary) -> Void
 
     // 現在最上部に表示中の月オフセット（ヘッダーの年表示用。従来どおり）
     @State private var visibleOffset: Int = 0
     @State private var isTrackingEnabled = false
+    // Recipe Detailへの型付きNavigation。タブを跨いでも保持されるようMonthScreenの@Stateで持つ
+    @State private var path: [CalendarRoute] = []
 
     private static let calendar = CalendarFactory.shared
 
@@ -47,16 +54,26 @@ struct CalendarMonthScreen: View {
 
     // MARK: - Initializer
 
-    init(days: [CalendarDay], isActive: Bool, viewModel: CalendarViewModel) {
+    init(
+        days: [CalendarDay],
+        isActive: Bool,
+        viewModel: CalendarViewModel,
+        recipeRepository: any RecipeRepository,
+        mealLogRepository: any MealLogRepository,
+        onMealLogSaved: @escaping (MealLogSummary) -> Void
+    ) {
         self.days = days
         self.isActive = isActive
         self.viewModel = viewModel
+        self.recipeRepository = recipeRepository
+        self.mealLogRepository = mealLogRepository
+        self.onMealLogSaved = onMealLogSaved
     }
 
     // MARK: - Body
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             VStack(spacing: 0) {
                 CalendarWeekdayHeaderView()
                 Divider()
@@ -70,7 +87,7 @@ struct CalendarMonthScreen: View {
                                         grid: grid,
                                         days: days,
                                         state: viewModel.state,
-                                        onSelectDate: { viewModel.send(.selectDate($0)) }
+                                        onSelectDate: handleSelectDate
                                     )
                                     .id(offset)
                                     // 各月が表示されたらその月のRecipe/MealLogを読み込む（重複はReducerが抑制）
@@ -110,6 +127,17 @@ struct CalendarMonthScreen: View {
                     }
                 }
             }
+            .navigationDestination(for: CalendarRoute.self) { route in
+                switch route {
+                case let .recipeDetail(recipeID, _):
+                    RecipeDetailScreen(
+                        recipeID: recipeID,
+                        recipeRepository: recipeRepository,
+                        mealLogRepository: mealLogRepository,
+                        onMealLogSaved: onMealLogSaved
+                    )
+                }
+            }
             .navigationTitle(yearText)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -130,7 +158,25 @@ struct CalendarMonthScreen: View {
         }
     }
 
+    // MARK: - Private Function
+
+    // 日付タップ処理。選択状態を更新し、その日に掲載レシピがあればRecipe Detailへ遷移する。
+    // 掲載なしの日は遷移しない（不正遷移を防ぐ）。複数掲載時は先頭のレシピを開く。
+    private func handleSelectDate(_ date: Date) {
+        viewModel.send(.selectDate(date))
+
+        let dateKey = DateKey(date: date, calendar: Self.dateKeyCalendar)
+        let monthKey = MonthKey(date: date, calendar: Self.dateKeyCalendar)
+        let entriesOnDay = viewModel.state.monthLoad(monthKey).recipeEntries
+            .filter { $0.dateKey == dateKey }
+        guard let entry = entriesOnDay.first else { return }
+        path.append(.recipeDetail(recipeID: entry.recipeID, publicationDayKey: dateKey))
+    }
+
     // MARK: - Private Function（スクロール機構は従来どおり・変更なし）
+
+    // 日付キー導出用Calendar（データ生成側と揃える）
+    private static let dateKeyCalendar = DateKeyCalendar.default
 
     private func restore(to offset: Int, using proxy: ScrollViewProxy) {
         isTrackingEnabled = false

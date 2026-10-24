@@ -33,4 +33,11 @@ enum CalendarAction: Sendable, Equatable {
     case loadSucceeded(requestID: UUID, monthKey: MonthKey, payload: CalendarMonthPayload)
     // 読み込み失敗
     case loadFailed(requestID: UUID, monthKey: MonthKey, message: String)
+
+    // MARK: - External notification（他画面での永続化結果の反映）
+
+    // 調理ログが保存/更新された。該当月のmealLogsへ反映する（Design A: 再取得せず直接反映）
+    case mealLogSaved(MealLogSummary)
+    // 調理ログが削除された（編集/削除UI実装時に使用）
+    case mealLogDeleted(MealLogID)
 }
