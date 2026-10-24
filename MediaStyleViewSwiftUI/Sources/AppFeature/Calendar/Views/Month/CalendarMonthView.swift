@@ -14,7 +14,6 @@ struct CalendarMonthView: View {
     // MARK: - Property
 
     let grid: CalendarMonthGrid
-    let days: [CalendarDay]
     let state: CalendarFeatureState
     let onSelectDate: (Date) -> Void
 
@@ -30,7 +29,6 @@ struct CalendarMonthView: View {
 
             CalendarMonthGridView(
                 grid: grid,
-                days: days,
                 state: state,
                 onSelectDate: onSelectDate
             )

@@ -27,7 +27,6 @@ public struct ContentView: View {
 
     public var body: some View {
         CalendarRootView(
-            days: dependencies.days,
             calendarUseCase: dependencies.calendarUseCase,
             timelineUseCase: dependencies.timelineUseCase,
             recipeRepository: dependencies.recipeRepository,

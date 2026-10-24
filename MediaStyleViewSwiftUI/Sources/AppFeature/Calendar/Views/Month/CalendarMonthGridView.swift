@@ -16,8 +16,6 @@ struct CalendarMonthGridView: View {
     // MARK: - Property
 
     let grid: CalendarMonthGrid
-    // 既存イベントドットの供給元（CalendarSampleData由来）
-    let days: [CalendarDay]
     // Recipe/MealLogの読込状態と選択中日付
     let state: CalendarFeatureState
     // 日付タップの通知（親経由でViewModelへ）
@@ -34,7 +32,7 @@ struct CalendarMonthGridView: View {
             ForEach(Array(grid.cells.enumerated()), id: \.offset) { _, cell in
                 if let date = cell {
                     CalendarDayCellView(
-                        viewData: factory.make(date: date, state: state, events: days)
+                        viewData: factory.make(date: date, state: state)
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {

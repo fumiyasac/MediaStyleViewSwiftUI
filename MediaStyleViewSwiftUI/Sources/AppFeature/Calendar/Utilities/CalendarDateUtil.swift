@@ -5,7 +5,7 @@
 //  Created by 酒井文也 on 2026/10/20.
 //
 
-// 日付の表示判定。データソースは引数で受け取り、Fixture（CalendarSampleData）に依存させない。
+// 日付の表示判定（日番号・今日・曜日・祝祭日・同一日）。状態やデータソースを持たない純粋ユーティリティ。
 
 import CalculateCalendarLogic
 import Foundation
@@ -56,13 +56,5 @@ enum CalendarDateUtil {
     // 2つの日付が同一日かどうか
     static func isSameDay(_ lhs: Date, _ rhs: Date) -> Bool {
         calendar.isDate(lhs, inSameDayAs: rhs)
-    }
-
-    // 指定日にイベントを持つ場合、その日のイベントが属するカテゴリ一覧を返す。
-    // データソースはFixtureに固定せず引数daysで受け取り、Root注入と同じ配列を使えるようにする。
-    static func categories(on date: Date, in days: [CalendarDay]) -> [CalendarCategory] {
-        days
-            .first { calendar.isDate($0.date, inSameDayAs: date) }?
-            .events.map(\.category) ?? []
     }
 }
