@@ -9,15 +9,14 @@
 // 以下を厳守する:
 //  - inout / &state を使わず、新しいStateを組み立てて返す
 //  - Taskを起動せず、URLSession/SwiftDataにも触れない
-//  - Date() / UUID() など非決定的な値をReducer内で生成しない
-//    （requestIDはbeginLoadingで外から渡されたものだけを使う）
-//  - 完了ActionのrequestIDが進行中IDと一致する時だけ反映し、古い結果で上書きしない
+//  - Date() / UUID() など非決定的な値をReducer内で生成しない（requestID/monthKeyは外から渡す）
+//  - 完了ActionのrequestIDが「その月の」進行中IDと一致する時だけ反映し、古い結果で上書きしない
+//  - 既読/読込中の月への読込要求は抑制する（重複読込・画面再表示での無限読込を防ぐ）
 
 import Foundation
 
 // MARK: - CalendarTransition
 
-// Reducerの戻り値。次のStateと、ViewModelが実行すべきEffect列。
 struct CalendarTransition: Sendable, Equatable {
     let state: CalendarFeatureState
     let effects: [CalendarEffect]
@@ -33,49 +32,58 @@ struct CalendarReducer: Sendable {
     ) -> CalendarTransition {
         switch action {
 
-        // onAppear / loadMonth は「読み込みたい」という意図のみ。
-        // requestIDの採番(UUID)はReducerでは行えないため、ViewModelがbeginLoadingへ展開する。
-        // Reducer単体ではStateを変えないno-opにして、関数全体を純粋・決定的に保つ。
+        // onAppear / loadMonth は意図のみ。requestID/MonthKeyの確定はViewModelが行い
+        // beginLoadingへ展開する。Reducer単体ではno-opにして純粋・決定的に保つ。
         case .onAppear, .loadMonth:
             return CalendarTransition(state: state, effects: [])
 
-        // 日付選択はselectedDateの更新のみ（この時点では再読込しない）
+        // 日付選択はselectedDateの更新のみ（再読込しない＝不要なAPIアクセスを発生させない）
         case let .selectDate(date):
             var newState = state
             newState.selectedDate = date
             return CalendarTransition(state: newState, effects: [])
 
-        // 読み込み開始の確定。表示月を更新し、進行中IDを差し替え、
-        // 直前データを保持したままloadingにして、読み込みEffectを返す。
-        case let .beginLoading(requestID, month):
+        // その月の読み込み開始。既読/読込中なら抑制（重複読込・無限読込を防ぐ）。
+        // idle/failedの時だけ、直前データを保持したままloadingにして読み込みEffectを返す。
+        case let .beginLoading(requestID, monthKey, month):
+            let current = state.monthLoad(monthKey)
+            guard !current.isActiveOrLoaded else {
+                return CalendarTransition(state: state, effects: [])
+            }
+            var load = current
+            load.phase = .loading
+            load.requestID = requestID
             var newState = state
-            newState.displayedMonth = month
-            newState.currentRequestID = requestID
-            newState.entriesState = .loading(previous: state.entriesState.entries)
+            newState.months[monthKey] = load
             return CalendarTransition(
                 state: newState,
-                effects: [.loadMonth(requestID: requestID, month: month)]
+                effects: [.loadMonth(requestID: requestID, monthKey: monthKey, month: month)]
             )
 
-        // 読み込み成功。進行中IDと一致する時のみ反映（古い結果は破棄）。
-        case let .loadSucceeded(requestID, entries):
-            guard requestID == state.currentRequestID else {
+        // 読み込み成功。その月の進行中IDと一致する時のみ反映（古い結果は破棄＝他月も壊さない）。
+        case let .loadSucceeded(requestID, monthKey, payload):
+            guard state.monthLoad(monthKey).requestID == requestID else {
                 return CalendarTransition(state: state, effects: [])
             }
+            var load = state.monthLoad(monthKey)
+            load.recipeEntries = payload.recipeEntries
+            load.mealLogs = payload.mealLogs
+            load.phase = .loaded
+            load.requestID = nil
             var newState = state
-            newState.entriesState = .loaded(entries)
-            newState.currentRequestID = nil
+            newState.months[monthKey] = load
             return CalendarTransition(state: newState, effects: [])
 
-        // 読み込み失敗。進行中IDと一致する時のみ反映（古い結果は破棄）。
-        // 直前データは保持してエラー表示と併存させる。
-        case let .loadFailed(requestID, message):
-            guard requestID == state.currentRequestID else {
+        // 読み込み失敗。その月の進行中IDと一致する時のみ反映。直前データは保持する。
+        case let .loadFailed(requestID, monthKey, message):
+            guard state.monthLoad(monthKey).requestID == requestID else {
                 return CalendarTransition(state: state, effects: [])
             }
+            var load = state.monthLoad(monthKey)
+            load.phase = .failed(message: message)
+            load.requestID = nil
             var newState = state
-            newState.entriesState = .failed(message: message, previous: state.entriesState.entries)
-            newState.currentRequestID = nil
+            newState.months[monthKey] = load
             return CalendarTransition(state: newState, effects: [])
         }
     }

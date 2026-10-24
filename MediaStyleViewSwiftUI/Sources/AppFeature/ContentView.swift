@@ -9,20 +9,29 @@ import SwiftUI
 
 public struct ContentView: View {
 
+    // MARK: - Property
+
+    // Composition Rootで組み立てた依存（UseCase/イベント配列）
+    private let dependencies: CalendarFeatureDependencies
+
     // MARK: - Initializer
 
-    public init() {}
+    // App起動時に一度だけ生成した依存を受け取る（ModelContainerの多重生成を避ける）。
+    // 既定はin-memory構成にして、ContentViewが再生成されても永続ストアを多重に開かないようにする
+    // （本番はApp側で生成した依存を明示的に渡す）。
+    public init(dependencies: CalendarFeatureDependencies = .inMemory()) {
+        self.dependencies = dependencies
+    }
 
     // MARK: - Body
 
     public var body: some View {
-        // サンプルデータを一度だけ生成し、Root経由で月・一覧タブへ同じ配列を渡す
-        CalendarRootView(days: CalendarSampleData.days)
+        CalendarRootView(days: dependencies.days, useCase: dependencies.useCase)
     }
 }
 
 // MARK: - Preview
 
 #Preview {
-    ContentView()
+    ContentView(dependencies: .inMemory())
 }

@@ -8,15 +8,18 @@
 import AppFeature
 import SwiftUI
 
-// TODO: MultiModule＆SwiftUIで構成する
-// TODO: StateMachineを利用した状態管理をする
 // TODO: BackendはGo言語で作成する
 
 @main
 struct MediaStyleViewSwiftUIApp: App {
+
+    // Composition Root。起動時に一度だけ依存(ModelContainer/Repository/UseCase)を組み立てて保持する。
+    // ここで1インスタンスだけ持つことでSwiftData ModelContainerの多重生成を避ける。
+    private let dependencies = CalendarFeatureDependencies()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(dependencies: dependencies)
         }
     }
 }

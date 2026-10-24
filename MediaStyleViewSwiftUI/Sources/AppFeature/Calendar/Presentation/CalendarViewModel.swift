@@ -8,10 +8,10 @@
 // ReducerとEffect実行をつなぐ@MainActor隔離のViewModel。
 // 役割:
 //  - ViewからのActionを受け、Reducerで純粋にStateを更新する
-//  - Reducerが返したEffectを非同期Taskで実行し、完了Actionを再送信する
-//  - requestID(UUID)の採番という非決定的処理はここ(非純粋な境界)だけで行う
-//  - 進行中Taskのキャンセルを管理し、古い結果が最新Stateを上書きしないようにする
-//    （requestID照合はReducer側でも二重に担保）
+//  - Reducerが返したEffectを「月ごとに」非同期Taskで実行し、完了Actionを再送信する
+//  - requestID(UUID)採番・MonthKey/月起点の導出という非純粋処理はここ(境界)だけで行う
+//  - 月ごとにTaskを保持し、同月の再読込では前Taskをキャンセル（別月のTaskは止めない）
+//  - 古い結果が最新Stateを上書きしないよう、Reducerのrequestid照合と二重に担保する
 
 import Foundation
 import Observation
@@ -26,12 +26,14 @@ final class CalendarViewModel {
 
     private let reducer: CalendarReducer
     private let useCase: any CalendarUseCase
-    // requestIDを採番するための注入可能なファクトリ（テストで固定でき、Reducerは非決定性に触れない）
+    // MonthKey・月起点の導出に使うCalendar（TimeZone内包）
+    private let calendar: Calendar
+    // requestIDを採番するファクトリ（テストで固定でき、Reducerは非決定性に触れない）
     private let requestIDProvider: @Sendable () -> UUID
 
-    // 進行中の読み込みTask。新しい読み込み開始時にキャンセルして1本に保つ。
+    // 月ごとの進行中Task。別月は並行して読み込めるようキーごとに保持する。
     // テストから完了待ちできるようinternalにする。
-    private(set) var loadTask: Task<Void, Never>?
+    private(set) var loadTasks: [MonthKey: Task<Void, Never>] = [:]
 
     // MARK: - Initializer
 
@@ -39,11 +41,13 @@ final class CalendarViewModel {
         useCase: any CalendarUseCase,
         initialState: CalendarFeatureState,
         reducer: CalendarReducer = CalendarReducer(),
+        calendar: Calendar = DateKeyCalendar.default,
         requestIDProvider: @escaping @Sendable () -> UUID = { UUID() }
     ) {
         self.useCase = useCase
         self.state = initialState
         self.reducer = reducer
+        self.calendar = calendar
         self.requestIDProvider = requestIDProvider
     }
 
@@ -51,15 +55,16 @@ final class CalendarViewModel {
 
     func send(_ action: CalendarAction) {
         switch action {
-        // 表示月の読み込みへ展開する
+        // 選択中の日付が属する月を読み込む
         case .onAppear:
-            send(.loadMonth(state.displayedMonth))
+            send(.loadMonth(state.selectedDate))
 
-        // ここでだけrequestIDを採番し、Reducerが扱えるbeginLoadingへ展開する
-        case let .loadMonth(month):
-            apply(.beginLoading(requestID: requestIDProvider(), month: month))
+        // MonthKey・月起点・requestIDを確定してbeginLoadingへ展開する
+        case let .loadMonth(date):
+            let monthKey = MonthKey(date: date, calendar: calendar)
+            let month = CalendarFeatureState.startOfMonth(for: date, calendar: calendar)
+            apply(.beginLoading(requestID: requestIDProvider(), monthKey: monthKey, month: month))
 
-        // その他はそのままReducerへ渡す
         default:
             apply(action)
         }
@@ -79,23 +84,20 @@ final class CalendarViewModel {
     // Effectを実行する。非同期処理・Taskの起動はここだけで行う。
     private func run(_ effect: CalendarEffect) {
         switch effect {
-        case let .loadMonth(requestID, month):
-            // 直前の読み込みはキャンセルして二重実行・古い結果の反映を防ぐ
-            loadTask?.cancel()
-            // useCaseはSendableなので値で捕捉。selfは@MainActor(=Sendable)だが循環参照回避のためweak。
+        case let .loadMonth(requestID, monthKey, month):
+            // 同月の前リクエストはキャンセル（別月のTaskは止めない）
+            loadTasks[monthKey]?.cancel()
             let useCase = self.useCase
-            loadTask = Task { [weak self] in
+            loadTasks[monthKey] = Task { [weak self] in
                 do {
-                    let entries = try await useCase.loadMonth(month)
-                    // 待機中にキャンセルされていたら結果を配送しない
+                    let payload = try await useCase.loadMonth(month)
                     try Task.checkCancellation()
-                    self?.send(.loadSucceeded(requestID: requestID, entries: entries))
+                    self?.send(.loadSucceeded(requestID: requestID, monthKey: monthKey, payload: payload))
                 } catch is CancellationError {
-                    // キャンセルは通常のエラーとして扱わない（画面エラーにしない）
+                    // キャンセルは画面エラーにしない
                 } catch {
-                    // キャンセル由来の失敗も画面エラーにしない
                     if Task.isCancelled { return }
-                    self?.send(.loadFailed(requestID: requestID, message: error.localizedDescription))
+                    self?.send(.loadFailed(requestID: requestID, monthKey: monthKey, message: error.localizedDescription))
                 }
             }
         }

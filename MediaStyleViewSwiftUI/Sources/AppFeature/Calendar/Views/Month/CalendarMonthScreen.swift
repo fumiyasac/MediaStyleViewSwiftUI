@@ -5,35 +5,34 @@
 //  Created by 酒井文也 on 2026/10/21.
 //
 
-// 月タブの画面入口。元コードの無限スクロール/位置検出/復元を維持。
+// 月タブの画面入口。無限スクロール/位置検出/復元の仕組みは一切変更しない。
+// 今回の追加:
+//  - CalendarViewModelを受け取り、各月の表示時にその月のRecipe/MealLogを読み込む（月ごとに重複抑制）
+//  - 各日セルへViewData(掲載レシピ/調理記録/選択)を反映し、タップでselectDateをViewModelへ通知する
 
 import SwiftUI
 
-public struct CalendarMonthScreen: View {
+struct CalendarMonthScreen: View {
 
     // MARK: - Property
 
     // 基準となる今月の1日。全オフセットはこの月を起点に計算する
     private let baseMonth = CalendarMonthGrid.startOfMonth(for: Date())
 
-    // 前後100年分（±1200ヶ月）の月を並べ、LazyVStackで可視分だけ描画することで
-    // 実質「無限スクロール」の体験を作る。真の無限リストにせずとも、この範囲なら
-    // ユーザー操作では端に到達せず、offset=0を今月として扱えるため実装が単純になる。
+    // 前後100年分（±1200ヶ月）。LazyVStackで可視分だけ描画し実質無限スクロールにする（従来どおり）
     private let monthOffsets = Array(-1200...1200)
 
     private let isActive: Bool
     private let days: [CalendarDay]
+    // StateMachine。Rootが所有し共有する（画面再描画で再生成しない）
+    private let viewModel: CalendarViewModel
 
-    // 現在最上部に表示中の月オフセット。ヘッダーの年表示に使う
+    // 現在最上部に表示中の月オフセット（ヘッダーの年表示用。従来どおり）
     @State private var visibleOffset: Int = 0
-    // 位置検出を受け付けるかのフラグ。復元スクロール中に途中経過の位置で
-    // visibleOffsetが誤更新されるのを防ぐためにfalseにする（詳細はrestore参照）
     @State private var isTrackingEnabled = false
 
-    // 共有Calendarを参照する（個別生成しない）
     private static let calendar = CalendarFactory.shared
 
-    // ヘッダーの年表示用DateFormatterはstaticで使い回す
     private static let yearFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ja_JP")
@@ -41,7 +40,6 @@ public struct CalendarMonthScreen: View {
         return formatter
     }()
 
-    // 表示中オフセットの月から「yyyy年」を導出する
     private var yearText: String {
         let date = Self.calendar.date(byAdding: .month, value: visibleOffset, to: baseMonth) ?? baseMonth
         return Self.yearFormatter.string(from: date)
@@ -49,21 +47,15 @@ public struct CalendarMonthScreen: View {
 
     // MARK: - Initializer
 
-    // 以前のpublic APIを壊さない互換用。画面内からのSampleData参照は旧API互換のみ
-    public init(isActive: Bool = true) {
-        self.isActive = isActive
-        self.days = CalendarSampleData.days
-    }
-
-    // Rootから同じイベント配列を注入する
-    init(days: [CalendarDay], isActive: Bool) {
+    init(days: [CalendarDay], isActive: Bool, viewModel: CalendarViewModel) {
         self.days = days
         self.isActive = isActive
+        self.viewModel = viewModel
     }
 
     // MARK: - Body
 
-    public var body: some View {
+    var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 CalendarWeekdayHeaderView()
@@ -74,18 +66,26 @@ public struct CalendarMonthScreen: View {
                         LazyVStack(spacing: 0) {
                             ForEach(monthOffsets, id: \.self) { offset in
                                 if let grid = CalendarMonthGrid(baseMonth: baseMonth, offset: offset) {
-                                    CalendarMonthView(grid: grid, days: days)
-                                        .id(offset)
-                                        // 各月の上端位置(minY)をmonthScroll座標系で収集し、
-                                        // onPreferenceChangeで最上部の月を判定する材料にする
-                                        .background(
-                                            GeometryReader { geo in
-                                                Color.clear.preference(
-                                                    key: CalendarMonthPositionKey.self,
-                                                    value: [offset: geo.frame(in: .named("monthScroll")).minY]
-                                                )
-                                            }
-                                        )
+                                    CalendarMonthView(
+                                        grid: grid,
+                                        days: days,
+                                        state: viewModel.state,
+                                        onSelectDate: { viewModel.send(.selectDate($0)) }
+                                    )
+                                    .id(offset)
+                                    // 各月が表示されたらその月のRecipe/MealLogを読み込む（重複はReducerが抑制）
+                                    .onAppear {
+                                        viewModel.send(.loadMonth(grid.monthStart))
+                                    }
+                                    // 各月の上端位置をmonthScroll座標系で収集（従来どおり）
+                                    .background(
+                                        GeometryReader { geo in
+                                            Color.clear.preference(
+                                                key: CalendarMonthPositionKey.self,
+                                                value: [offset: geo.frame(in: .named("monthScroll")).minY]
+                                            )
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -95,11 +95,9 @@ public struct CalendarMonthScreen: View {
                         updateVisibleOffset(from: positions)
                     }
                     .onAppear {
-                        // 初回表示時に現在のoffset（=今月0）へ復元して今月を先頭に出す
                         restore(to: visibleOffset, using: proxy)
                     }
                     .onChange(of: isActive) { _, nowActive in
-                        // タブ復帰時は元の位置へ戻す。離脱時は追跡を止めて誤更新を防ぐ
                         if nowActive {
                             restore(to: visibleOffset, using: proxy)
                         } else {
@@ -107,8 +105,6 @@ public struct CalendarMonthScreen: View {
                         }
                     }
                     .onReceive(NotificationCenter.default.publisher(for: .scrollToToday)) { _ in
-                        // 「今日」ボタンはツールバー（別の階層）にあり、ここのproxyへ直接触れない。
-                        // そのためNotificationCenter経由で今月(offset=0)への復元を依頼する
                         visibleOffset = 0
                         restore(to: 0, using: proxy)
                     }
@@ -134,13 +130,8 @@ public struct CalendarMonthScreen: View {
         }
     }
 
-    // MARK: - Private Function
+    // MARK: - Private Function（スクロール機構は従来どおり・変更なし）
 
-    // 指定オフセットの月を最上部へ復元する。
-    // LazyVStackは生成タイミングでレイアウトが確定しないことがあり、1回のscrollToでは
-    // ずれる場合がある。そのため0/0.15/0.3秒の3回scrollToして確実に目的の月へ寄せ、
-    // レイアウトが落ち着く0.45秒後に追跡を再開する。復元中(isTrackingEnabled=false)は
-    // 途中位置でvisibleOffsetが書き換わらないようにしている。
     private func restore(to offset: Int, using proxy: ScrollViewProxy) {
         isTrackingEnabled = false
         for delay in [0.0, 0.15, 0.3] {
@@ -153,10 +144,6 @@ public struct CalendarMonthScreen: View {
         }
     }
 
-    // 収集した各月の上端位置から、最上部に表示中の月オフセットを決めてヘッダーに反映する。
-    // thresholdはヘッダー直下の境界線(y≒0)。上端がそこを過ぎた(minY<=threshold)月のうち
-    // 最も下にある=最も境界に近い月を「今まさに最上部の月」とみなす。
-    // どの月もまだ境界を過ぎていない場合は、最も上にある月を採用する。
     private func updateVisibleOffset(from positions: [Int: CGFloat]) {
         guard isTrackingEnabled, !positions.isEmpty else { return }
 
@@ -173,10 +160,4 @@ public struct CalendarMonthScreen: View {
             visibleOffset = chosen
         }
     }
-}
-
-// MARK: - Preview
-
-#Preview {
-    CalendarMonthScreen()
 }
