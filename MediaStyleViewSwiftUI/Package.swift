@@ -8,7 +8,7 @@ import PackageDescription
 
 let package = Package(
     name: "MediaStyleViewSwiftUI",
-    platforms: [.iOS(.v17)],
+    platforms: [.iOS(.v18)],
     products: [
         .library(name: "AppFeature", targets: ["AppFeature"])
     ],
@@ -21,6 +21,10 @@ let package = Package(
             name: "AppFeature",
             dependencies: [
                 .product(name: "CalculateCalendarLogic", package: "handMadeCalendarAdvance"),
+            ],
+            // レシピのHero画像（Asset Catalog）をBundle.module経由で読み込む
+            resources: [
+                .process("Resources/RecipeImages.xcassets"),
             ]
         ),
         .testTarget(
