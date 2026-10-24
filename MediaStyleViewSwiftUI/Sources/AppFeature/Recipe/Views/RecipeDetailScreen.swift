@@ -6,7 +6,9 @@
 //
 
 // レシピ詳細画面。RecipeDetailViewModel経由でRecipe(Domain Model)とこのレシピの調理記録を表示する。
-// 画像は未提供のため、カテゴリ色＋SF Symbolのプレースホルダーを主役に置く。
+// 写真メディア風の閲覧体験のため、背面に固定したHero(RecipeHeroView)の上を不透明な本文がスクロールする。
+// スクロール量はonScrollGeometryChange(iOS 18+)で必要な値だけ取得し、Heroの描画と
+// Compact Titleの表示判定にのみ使う（StateMachine/ViewModelへは毎フレーム送らない）。
 // 「作った記録を追加」からMealLog EditorのSheetを開き、保存成功時にDetailとCalendarへ反映する。
 
 import SwiftUI
@@ -17,18 +19,21 @@ struct RecipeDetailScreen: View {
 
     @State private var viewModel: RecipeDetailViewModel
     @State private var showEditor = false
+    // スクロール連動の一時的な描画状態（StateMachineではなくViewが所有する）
+    @State private var scrollOffset: CGFloat = 0
+    @State private var isCompact = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let recipeID: RecipeID
     private let mealLogRepository: any MealLogRepository
     // 保存成功をCalendar側へ通知するクロージャ（CalendarViewModel.send(.mealLogSaved)相当）
     private let onMealLogSaved: (MealLogSummary) -> Void
 
-    private static let logDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "yyyy年M月d日(E)"
-        return formatter
-    }()
+    // Hero展開時の高さ（描画パラメータ計算の基準）
+    private static let heroHeight: CGFloat = 320
+    // 本文上端をHeroへ少し重ねる量（角丸を被せるメディア風の見た目）
+    private static let contentOverlap: CGFloat = 24
 
     // MARK: - Initializer
 
@@ -54,7 +59,6 @@ struct RecipeDetailScreen: View {
 
     var body: some View {
         content
-            .navigationTitle("レシピ")
             .navigationBarTitleDisplayMode(.inline)
             .task { viewModel.load() }
     }
@@ -67,6 +71,7 @@ struct RecipeDetailScreen: View {
         case .loading:
             ProgressView("読み込み中…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .navigationTitle("レシピ")
 
         case let .failed(message):
             VStack(spacing: 12) {
@@ -78,6 +83,7 @@ struct RecipeDetailScreen: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .accessibilityElement(children: .combine)
+            .navigationTitle("レシピ")
 
         case let .loaded(recipe, mealLogs):
             loadedBody(recipe: recipe, mealLogs: mealLogs)
@@ -85,36 +91,44 @@ struct RecipeDetailScreen: View {
     }
 
     private func loadedBody(recipe: Recipe, mealLogs: [MealLogSummary]) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                heroImage(for: recipe)
+        ZStack(alignment: .top) {
+            // 背面に固定するHero（本文がこの上をスクロールして覆う）
+            RecipeHeroView(
+                recipe: recipe,
+                scrollOffset: scrollOffset,
+                expandedHeight: Self.heroHeight,
+                reduceMotion: reduceMotion
+            )
+            .frame(height: Self.heroHeight)
+            .frame(maxWidth: .infinity)
+            .ignoresSafeArea(edges: .top)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(recipe.category.displayName)
-                        .font(.caption.bold())
-                        .foregroundStyle(CalendarTheme.accent)
-                    Text(recipe.title)
-                        .font(.title.bold())
-                    Text(recipe.summary)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Hero分の余白（透明なのでHeroが見える）。本文を少しだけHeroへ重ねる。
+                    Color.clear.frame(height: Self.heroHeight - Self.contentOverlap)
+
+                    RecipeDetailContent(
+                        recipe: recipe,
+                        mealLogs: mealLogs,
+                        onAddTap: { showEditor = true }
+                    )
+                    .background(Color(.systemBackground))
+                    .clipShape(.rect(topLeadingRadius: 24, topTrailingRadius: 24))
                 }
-
-                metaRow(for: recipe)
-
-                Divider()
-                RecipeIngredientSectionView(ingredients: recipe.ingredients, servings: recipe.servings)
-
-                Divider()
-                RecipeInstructionSectionView(steps: recipe.steps)
-
-                Divider()
-                mealLogSection(mealLogs: mealLogs)
-
-                addMealLogButton(recipe: recipe)
             }
-            .padding(16)
+            // 必要な値（先頭からのスクロール量）だけを抽出して受け取る
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { _, newOffset in
+                scrollOffset = newOffset
+                updateCompactState(for: newOffset)
+            }
+            // Heroと原点を揃えてフルブリード表示にする（本文はSafe Area内に収まる）
+            .ignoresSafeArea(edges: .top)
         }
+        .navigationTitle(isCompact ? recipe.title : "")
+        .toolbarBackground(isCompact ? .visible : .hidden, for: .navigationBar)
         .sheet(isPresented: $showEditor) {
             MealLogEditorSheet(
                 recipeID: recipe.id,
@@ -130,53 +144,87 @@ struct RecipeDetailScreen: View {
         }
     }
 
-    // 画像プレースホルダー（カテゴリ色のグラデーション＋シンボル）
-    private func heroImage(for recipe: Recipe) -> some View {
-        let base = heroColor(for: recipe.category)
-        return ZStack {
-            LinearGradient(
-                colors: [base.opacity(0.85), base.opacity(0.5)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            Image(systemName: recipe.category.symbolName)
-                .font(.system(size: 56))
-                .foregroundStyle(.white)
-        }
-        .frame(height: 180)
-        .frame(maxWidth: .infinity)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .accessibilityLabel("\(recipe.title)の写真プレースホルダー")
-    }
+    // MARK: - Private Function
 
-    // カテゴリ別のプレースホルダー色（DomainをSwiftUIに結合させないためView側でマップ）
-    private func heroColor(for category: RecipeCategory) -> Color {
-        switch category {
-        case .japanese: return Color(red: 0.90, green: 0.45, blue: 0.35)
-        case .western: return Color(red: 0.85, green: 0.55, blue: 0.25)
-        case .chinese: return Color(red: 0.80, green: 0.30, blue: 0.30)
-        case .italian: return Color(red: 0.40, green: 0.65, blue: 0.45)
-        case .dessert: return Color(red: 0.85, green: 0.45, blue: 0.65)
-        case .healthy: return Color(red: 0.40, green: 0.70, blue: 0.55)
+    // Compact Title表示をヒステリシス付きで更新（閾値付近の点滅を避ける）。
+    // Reduce Motion時はアニメーションを付けない。
+    private func updateCompactState(for offset: CGFloat) {
+        let progress = RecipeHeroMetrics.make(
+            scrollOffset: offset,
+            expandedHeight: Self.heroHeight
+        ).collapseProgress
+        let next = RecipeHeroMetrics.compactTitleVisible(
+            collapseProgress: progress,
+            isCurrentlyCompact: isCompact
+        )
+        guard next != isCompact else { return }
+        if reduceMotion {
+            isCompact = next
+        } else {
+            withAnimation(.easeInOut(duration: 0.2)) { isCompact = next }
         }
     }
+}
 
-    private func metaRow(for recipe: Recipe) -> some View {
+// MARK: - RecipeDetailContent
+
+// 本文（スクロール量に依存しない）。別Viewに切り出すことで、スクロール中に
+// scrollOffsetが変化しても本文のbodyが再評価されないようにする（材料・手順の再描画を避ける）。
+private struct RecipeDetailContent: View {
+
+    let recipe: Recipe
+    let mealLogs: [MealLogSummary]
+    let onAddTap: () -> Void
+
+    private static let logDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.dateFormat = "yyyy年M月d日(E)"
+        return formatter
+    }()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(recipe.category.displayName)
+                    .font(.caption.bold())
+                    .foregroundStyle(CalendarTheme.accent)
+                Text(recipe.title)
+                    .font(.title.bold())
+                Text(recipe.summary)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+            }
+
+            metaRow
+
+            Divider()
+            RecipeIngredientSectionView(ingredients: recipe.ingredients, servings: recipe.servings)
+
+            Divider()
+            RecipeInstructionSectionView(steps: recipe.steps)
+
+            Divider()
+            mealLogSection
+
+            addMealLogButton
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var metaRow: some View {
         HStack(spacing: 20) {
-            metaItem(icon: "clock", text: "\(recipe.cookingMinutes)分")
-            metaItem(icon: "person.2", text: "\(recipe.servings)人分")
-            metaItem(icon: "flame", text: "\(recipe.calories)kcal")
+            Label("\(recipe.cookingMinutes)分", systemImage: "clock")
+            Label("\(recipe.servings)人分", systemImage: "person.2")
+            Label("\(recipe.calories)kcal", systemImage: "flame")
         }
         .font(.subheadline)
         .foregroundStyle(.secondary)
     }
 
-    private func metaItem(icon: String, text: String) -> some View {
-        Label(text, systemImage: icon)
-    }
-
     @ViewBuilder
-    private func mealLogSection(mealLogs: [MealLogSummary]) -> some View {
+    private var mealLogSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("あなたの調理記録")
                 .font(.headline)
@@ -207,10 +255,8 @@ struct RecipeDetailScreen: View {
         }
     }
 
-    private func addMealLogButton(recipe: Recipe) -> some View {
-        Button {
-            showEditor = true
-        } label: {
+    private var addMealLogButton: some View {
+        Button(action: onAddTap) {
             Label("作った記録を追加", systemImage: "plus.circle.fill")
                 .font(.headline)
                 .frame(maxWidth: .infinity)
