@@ -6,10 +6,11 @@
 //
 
 // Calendar FeatureのStateMachine（月単位Reducer遷移 / ViewModelの非同期ロード / DI）のテスト。
+// Swift Testing へ移行済み。UseCase Stubはactorで並列安全、同期待ちはloadTasksのawaitで行う（Task.sleep非依存）。
 
 @testable import AppFeature
 import Foundation
-import XCTest
+import Testing
 
 // MARK: - Test Doubles
 
@@ -79,7 +80,8 @@ private func makeMealLog(_ dateKey: String, _ recipe: String = "recipe-01") -> M
 
 // MARK: - CalendarReducerTests
 
-final class CalendarReducerTests: XCTestCase {
+@Suite("Calendarの状態遷移")
+struct CalendarReducerTests {
 
     private let reducer = CalendarReducer()
 
@@ -88,7 +90,8 @@ final class CalendarReducerTests: XCTestCase {
     }
 
     // 1. 読み込み開始で、その月がloading化し読み込みEffectが返る
-    func testBeginLoadingReturnsLoadEffect() {
+    @Test("読み込み開始でその月がloading化し読み込みEffectが返る")
+    func beginLoadingReturnsLoadEffect() {
         let id = UUID()
         let monthKey = MonthKey(value: "2026-03")
         let month = makeDate(2026, 3, 1)
@@ -97,21 +100,23 @@ final class CalendarReducerTests: XCTestCase {
             state: initialState(),
             action: .beginLoading(requestID: id, monthKey: monthKey, month: month)
         )
-        XCTAssertEqual(transition.state.monthLoad(monthKey).phase, .loading)
-        XCTAssertEqual(transition.state.monthLoad(monthKey).requestID, id)
-        XCTAssertEqual(transition.effects, [.loadMonth(requestID: id, monthKey: monthKey, month: month)])
+        #expect(transition.state.monthLoad(monthKey).phase == .loading)
+        #expect(transition.state.monthLoad(monthKey).requestID == id)
+        #expect(transition.effects == [.loadMonth(requestID: id, monthKey: monthKey, month: month)])
     }
 
     // 4. 日付選択でselectedDateが更新され、Effectは無い
-    func testSelectDateUpdatesSelectedDate() {
+    @Test("日付選択でselectedDateが更新されEffectは無い")
+    func selectDateUpdatesSelectedDate() {
         let selected = makeDate(2026, 3, 20)
         let transition = reducer.reduce(state: initialState(), action: .selectDate(selected))
-        XCTAssertEqual(transition.state.selectedDate, selected)
-        XCTAssertTrue(transition.effects.isEmpty)
+        #expect(transition.state.selectedDate == selected)
+        #expect(transition.effects.isEmpty)
     }
 
     // 2 & 3. 読み込み成功でRecipeとMealLogがStateへ反映される
-    func testLoadSucceededReflectsRecipeAndMealLog() {
+    @Test("読み込み成功でRecipeとMealLogがStateへ反映される")
+    func loadSucceededReflectsRecipeAndMealLog() {
         let id = UUID()
         let monthKey = MonthKey(value: "2026-03")
         var state = initialState()
@@ -130,14 +135,15 @@ final class CalendarReducerTests: XCTestCase {
                 payload: CalendarMonthPayload(recipeEntries: entries, mealLogs: logs)
             )
         )
-        XCTAssertEqual(transition.state.monthLoad(monthKey).recipeEntries, entries)
-        XCTAssertEqual(transition.state.monthLoad(monthKey).mealLogs, logs)
-        XCTAssertEqual(transition.state.monthLoad(monthKey).phase, .loaded)
-        XCTAssertNil(transition.state.monthLoad(monthKey).requestID)
+        #expect(transition.state.monthLoad(monthKey).recipeEntries == entries)
+        #expect(transition.state.monthLoad(monthKey).mealLogs == logs)
+        #expect(transition.state.monthLoad(monthKey).phase == .loaded)
+        #expect(transition.state.monthLoad(monthKey).requestID == nil)
     }
 
     // 5. 読み込み失敗で既存データが必要以上に消えない（直前のRecipe/MealLogを保持）
-    func testLoadFailedKeepsPreviousData() {
+    @Test("読み込み失敗で直前のRecipe/MealLogを保持する")
+    func loadFailedKeepsPreviousData() {
         let id = UUID()
         let monthKey = MonthKey(value: "2026-03")
         var state = initialState()
@@ -153,13 +159,14 @@ final class CalendarReducerTests: XCTestCase {
             state: state,
             action: .loadFailed(requestID: id, monthKey: monthKey, message: "読み込み失敗")
         )
-        XCTAssertEqual(transition.state.monthLoad(monthKey).phase, .failed(message: "読み込み失敗"))
-        XCTAssertEqual(transition.state.monthLoad(monthKey).recipeEntries, [makeEntry("2026-03-01")])
-        XCTAssertEqual(transition.state.monthLoad(monthKey).mealLogs.count, 1)
+        #expect(transition.state.monthLoad(monthKey).phase == .failed(message: "読み込み失敗"))
+        #expect(transition.state.monthLoad(monthKey).recipeEntries == [makeEntry("2026-03-01")])
+        #expect(transition.state.monthLoad(monthKey).mealLogs.count == 1)
     }
 
     // 6. 古いrequestIDの成功結果は無視される
-    func testStaleSucceededIsIgnored() {
+    @Test("古いrequestIDの成功結果は無視される")
+    func staleSucceededIsIgnored() {
         let monthKey = MonthKey(value: "2026-03")
         var state = initialState()
         state.months[monthKey] = CalendarMonthLoad(
@@ -173,11 +180,12 @@ final class CalendarReducerTests: XCTestCase {
                 payload: CalendarMonthPayload(recipeEntries: [makeEntry("2026-03-01")], mealLogs: [])
             )
         )
-        XCTAssertEqual(transition.state, state)
+        #expect(transition.state == state)
     }
 
     // 7. 古いrequestIDの失敗結果は無視される
-    func testStaleFailedIsIgnored() {
+    @Test("古いrequestIDの失敗結果は無視される")
+    func staleFailedIsIgnored() {
         let monthKey = MonthKey(value: "2026-03")
         var state = initialState()
         state.months[monthKey] = CalendarMonthLoad(
@@ -187,11 +195,12 @@ final class CalendarReducerTests: XCTestCase {
             state: state,
             action: .loadFailed(requestID: UUID(), monthKey: monthKey, message: "x")
         )
-        XCTAssertEqual(transition.state, state)
+        #expect(transition.state == state)
     }
 
     // 8. 別月の読み込み完了で、他月のデータが消えない
-    func testOtherMonthDataIsPreserved() {
+    @Test("別月の読み込み完了で他月のデータが消えない")
+    func otherMonthDataIsPreserved() {
         let marchKey = MonthKey(value: "2026-03")
         let aprilKey = MonthKey(value: "2026-04")
         let aprilID = UUID()
@@ -215,13 +224,14 @@ final class CalendarReducerTests: XCTestCase {
             )
         )
         // 4月は更新、3月はそのまま
-        XCTAssertEqual(transition.state.monthLoad(aprilKey).recipeEntries, [makeEntry("2026-04-01")])
-        XCTAssertEqual(transition.state.monthLoad(marchKey).recipeEntries, [makeEntry("2026-03-01")])
-        XCTAssertEqual(transition.state.monthLoad(marchKey).phase, .loaded)
+        #expect(transition.state.monthLoad(aprilKey).recipeEntries == [makeEntry("2026-04-01")])
+        #expect(transition.state.monthLoad(marchKey).recipeEntries == [makeEntry("2026-03-01")])
+        #expect(transition.state.monthLoad(marchKey).phase == .loaded)
     }
 
     // 9. 同じ月の重複読み込みは抑制される（loading/loaded中は新規Effectを出さない）
-    func testDuplicateLoadIsSuppressed() {
+    @Test("同じ月の重複読み込みは抑制される")
+    func duplicateLoadIsSuppressed() {
         let monthKey = MonthKey(value: "2026-03")
         var state = initialState()
         state.months[monthKey] = CalendarMonthLoad(
@@ -231,12 +241,13 @@ final class CalendarReducerTests: XCTestCase {
             state: state,
             action: .beginLoading(requestID: UUID(), monthKey: monthKey, month: makeDate(2026, 3, 1))
         )
-        XCTAssertTrue(transition.effects.isEmpty)
-        XCTAssertEqual(transition.state, state)
+        #expect(transition.effects.isEmpty)
+        #expect(transition.state == state)
     }
 
     // Reducerの決定性
-    func testReducerIsDeterministic() {
+    @Test("同じ条件なら同じ結果になる（決定性）")
+    func reducerIsDeterministic() {
         let id = UUID()
         let monthKey = MonthKey(value: "2026-03")
         let state = initialState()
@@ -246,9 +257,8 @@ final class CalendarReducerTests: XCTestCase {
             .onAppear,
         ]
         for action in actions {
-            XCTAssertEqual(
-                reducer.reduce(state: state, action: action),
-                reducer.reduce(state: state, action: action)
+            #expect(
+                reducer.reduce(state: state, action: action) == reducer.reduce(state: state, action: action)
             )
         }
     }
@@ -257,7 +267,8 @@ final class CalendarReducerTests: XCTestCase {
 // MARK: - CalendarViewModelTests
 
 @MainActor
-final class CalendarViewModelTests: XCTestCase {
+@Suite("Calendar ViewModelの非同期ロード")
+struct CalendarViewModelTests {
 
     private let referenceDate = makeDate(2026, 3, 15)
     private var marchKey: MonthKey { MonthKey(date: referenceDate, calendar: tokyoCalendar) }
@@ -271,7 +282,8 @@ final class CalendarViewModelTests: XCTestCase {
     }
 
     // 19 & 2 & 3. Fixture+InMemoryを注入し、onAppearでRecipe/MealLogがStateへ反映される
-    func testViewModelOnAppearLoadsViaFixtureAndInMemory() async throws {
+    @Test("onAppearでFixture+InMemoryからRecipe/MealLogがStateへ反映される")
+    func viewModelOnAppearLoadsViaFixtureAndInMemory() async throws {
         let mealLogRepository = InMemoryMealLogRepository(calendar: tokyoCalendar)
         // 20. InMemoryに当月の調理ログを事前投入
         _ = try await mealLogRepository.add(
@@ -288,41 +300,45 @@ final class CalendarViewModelTests: XCTestCase {
         await viewModel.loadTasks[marchKey]?.value
 
         let load = viewModel.state.monthLoad(marchKey)
-        XCTAssertEqual(load.phase, .loaded)
-        XCTAssertFalse(load.recipeEntries.isEmpty)
-        XCTAssertTrue(load.recipeEntries.allSatisfy { $0.dateKey.value.hasPrefix("2026-03") })
-        XCTAssertEqual(load.mealLogs.map(\.dateKey), [DateKey(value: "2026-03-10")])
+        #expect(load.phase == .loaded)
+        #expect(!load.recipeEntries.isEmpty)
+        #expect(load.recipeEntries.allSatisfy { $0.dateKey.value.hasPrefix("2026-03") })
+        #expect(load.mealLogs.map(\.dateKey) == [DateKey(value: "2026-03-10")])
     }
 
     // 4. selectDateでselectedDateが更新される
-    func testViewModelSelectDate() {
+    @Test("selectDateでselectedDateが更新される")
+    func viewModelSelectDate() {
         let viewModel = makeViewModel(useCase: StubCalendarUseCase([]))
         let selected = makeDate(2026, 3, 25)
         viewModel.send(.selectDate(selected))
-        XCTAssertEqual(viewModel.state.selectedDate, selected)
+        #expect(viewModel.state.selectedDate == selected)
     }
 
     // 10. キャンセルされた読み込みは画面エラーにならない
-    func testViewModelCancelledLoadDoesNotBecomeError() async throws {
+    @Test("キャンセルされた読み込みは画面エラーにならない")
+    func viewModelCancelledLoadDoesNotBecomeError() async throws {
         let viewModel = makeViewModel(useCase: StubCalendarUseCase([.cancelled]))
         viewModel.send(.onAppear)
         await viewModel.loadTasks[marchKey]?.value
 
-        XCTAssertNil(viewModel.state.monthLoad(marchKey).errorMessage)
-        XCTAssertEqual(viewModel.state.monthLoad(marchKey).phase, .loading)
+        #expect(viewModel.state.monthLoad(marchKey).errorMessage == nil)
+        #expect(viewModel.state.monthLoad(marchKey).phase == .loading)
     }
 
     // 失敗時はerrorMessageが入る
-    func testViewModelLoadFailure() async throws {
+    @Test("失敗時はerrorMessageが入る")
+    func viewModelLoadFailure() async throws {
         let viewModel = makeViewModel(useCase: StubCalendarUseCase([.failure(message: "通信エラー")]))
         viewModel.send(.onAppear)
         await viewModel.loadTasks[marchKey]?.value
 
-        XCTAssertEqual(viewModel.state.monthLoad(marchKey).errorMessage, "通信エラー")
+        #expect(viewModel.state.monthLoad(marchKey).errorMessage == "通信エラー")
     }
 
     // 9(ViewModel). 同じ月を2回loadしても重複Taskにならない（2回目は抑制）
-    func testViewModelDuplicateMonthSuppressed() async throws {
+    @Test("同じ月を2回loadしても重複Taskにならない")
+    func viewModelDuplicateMonthSuppressed() async throws {
         let stub = StubCalendarUseCase([.success(CalendarMonthPayload(recipeEntries: [makeEntry("2026-03-01")], mealLogs: []))])
         let viewModel = makeViewModel(useCase: stub)
 
@@ -331,11 +347,12 @@ final class CalendarViewModelTests: XCTestCase {
         await viewModel.loadTasks[marchKey]?.value
 
         let loadedCount = await stub.loadedMonths.count
-        XCTAssertEqual(loadedCount, 1)
+        #expect(loadedCount == 1)
     }
 
     // 22. ViewModelを再生成せずに複数月を切り替えて読み込める
-    func testViewModelLoadsMultipleMonthsWithoutRecreation() async throws {
+    @Test("ViewModelを再生成せずに複数月を切り替えて読み込める")
+    func viewModelLoadsMultipleMonthsWithoutRecreation() async throws {
         let useCase = DefaultCalendarUseCase(
             recipeRepository: FixtureRecipeRepository(referenceDate: referenceDate, calendar: tokyoCalendar),
             mealLogRepository: InMemoryMealLogRepository(calendar: tokyoCalendar),
@@ -351,12 +368,13 @@ final class CalendarViewModelTests: XCTestCase {
         await viewModel.loadTasks[marchKey]?.value
         await viewModel.loadTasks[aprilKey]?.value
 
-        XCTAssertEqual(viewModel.state.monthLoad(marchKey).phase, .loaded)
-        XCTAssertEqual(viewModel.state.monthLoad(aprilKey).phase, .loaded)
+        #expect(viewModel.state.monthLoad(marchKey).phase == .loaded)
+        #expect(viewModel.state.monthLoad(aprilKey).phase == .loaded)
     }
 
     // 21. SwiftData Repositoryを使った取得結果がStateへ反映される
-    func testViewModelWithSwiftDataRepository() async throws {
+    @Test("SwiftData Repositoryを使った取得結果がStateへ反映される")
+    func viewModelWithSwiftDataRepository() async throws {
         let container = try MealLogModelContainerFactory.makeInMemory()
         let mealLogRepository = SwiftDataMealLogRepository(modelContainer: container)
         _ = try await mealLogRepository.add(
@@ -373,7 +391,7 @@ final class CalendarViewModelTests: XCTestCase {
         await viewModel.loadTasks[marchKey]?.value
 
         let load = viewModel.state.monthLoad(marchKey)
-        XCTAssertEqual(load.phase, .loaded)
-        XCTAssertEqual(load.mealLogs.map(\.dateKey), [DateKey(value: "2026-03-12")])
+        #expect(load.phase == .loaded)
+        #expect(load.mealLogs.map(\.dateKey) == [DateKey(value: "2026-03-12")])
     }
 }
