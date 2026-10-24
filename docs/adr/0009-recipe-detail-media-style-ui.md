@@ -12,8 +12,10 @@ Collapsing Header・Compact Titleをスクロール位置に連動して表現�
 （読込/表示/MealLog Editor連携/保存反映/Navigation）とSwift 6安全性・スクロール性能を最優先で維持する。
 
 本PRのためにDeployment Targetを **iOS 18** へ引き上げ、スクロール取得に `onScrollGeometryChange`(iOS 18+)を採用する
-（ユーザー方針）。Recipe Domainに画像プロパティは無いため、Heroはカテゴリ色グラデーション＋SF Symbolの
-プレースホルダーを主役に置く（永続化やDomainは変更しない）。
+（ユーザー方針）。Heroにはレシピの実写真を用いる。画像はAsset Catalog(`Resources/RecipeImages.xcassets`)に
+`RecipeID.rawValue`(`recipe-01`…`recipe-12`)で登録し、`Bundle.module`経由で読み込む。画像が無いレシピは
+カテゴリ色グラデーション＋SF Symbolのプレースホルダーへフォールバックする。Recipe Domain・永続化設計は変更しない
+（Domainに画像プロパティは追加せず、View側でIDから解決する）。
 
 ## Decision
 
@@ -45,7 +47,8 @@ Collapsing Header・Compact Titleをスクロール位置に連動して表現�
 
 5. **Viewの責務分離**:
    - `RecipeDetailScreen`: 画面組み立て・ViewModel接続・ScrollView構成・onScrollGeometryChange・Navigation・Editor導線。
-   - `RecipeHeroView`: Heroプレースホルダー描画・Stretch/Parallaxの視覚表現・クリッピング。
+   - `RecipeHeroView`: Hero画像（実写真/プレースホルダーfallback）の描画・Stretch/Parallaxの視覚表現・
+     可読性スクリム・クリッピング。画像はローカルAsset Catalogのため同期読み込みで十分（非同期/ネットワーク状態は不要）。
    - `RecipeHeroMetrics`(PresentationSupport): スクロール量→描画パラメータの純粋計算とUnit Test可能性。
    - `RecipeDetailContent`(private): 本文（scrollOffsetに依存しない）。別Viewに切り出し、スクロール中に
      scrollOffsetが変化しても本文bodyを再評価させない（材料・手順の再描画を避ける）。
@@ -85,7 +88,8 @@ Collapsing Header・Compact Titleをスクロール位置に連動して表現�
 ### トレードオフ・既知の制約
 
 - Deployment Targetを iOS 18 へ引き上げた（App Target含む）。iOS 17以前は非対応。
-- Heroは実写ではなくカテゴリ色プレースホルダー（Recipe Domainに画像が無いため）。実画像対応は将来課題。
+- Heroはレシピの実写真(800×600 JPEG, Asset Catalog, `RecipeID`キー)を使用。未登録IDはプレースホルダーへフォールバック。
+  画像はアプリにバンドルするためバイナリサイズが増える（約2MB/12枚）。Backendや画像配信基盤は新設しない。
 - Compact Title出現時、スクロール途中で本文の大タイトルと短時間併存しうる（重なりはせず、iOSの大タイトル遷移に類似）。
 - Pull-down Stretchはドラッグ中の過渡表現で、静止スクショでの採取が難しい（コード/計算で担保）。
 - 画面遷移のZoom表現は本PRに含めない。
@@ -96,5 +100,6 @@ Collapsing Header・Compact Titleをスクロール位置に連動して表現�
   飽和安定/閾値付近の健全性/決定性/最小高さ非下回り/Stretch上限/不正高さ安全/Compact Titleヒステリシス）。
   既存のRecipe Detail/MealLog/Calendar/Timelineの回帰テストも維持。合計 111 tests / 18 suites passed。
 - App `xcodebuild build`（iOS 18 Simulator）→ `** BUILD SUCCEEDED **`。
-- Simulator手動: Timeline→Recipe Detail遷移、フルブリードHero表示、上スクロールでParallax+Collapse+Compact Title出現、
-  戻るボタン操作、本文の可読性を確認。Pull-down Stretchの過渡・Reduce Motion/Dynamic Type/VoiceOver・iPad/物理デバイスは未検証（後述）。
+- Simulator手動: Timeline→Recipe Detail遷移、フルブリードの実写真Hero(マルゲリータ=ピザ写真でID対応を確認)、
+  上スクロールでParallax+Collapse+Compact Title出現、戻るボタン操作、本文の可読性を確認。
+  Pull-down Stretchの過渡・Reduce Motion/Dynamic Type/VoiceOver・iPad/物理デバイスは未検証（後述）。

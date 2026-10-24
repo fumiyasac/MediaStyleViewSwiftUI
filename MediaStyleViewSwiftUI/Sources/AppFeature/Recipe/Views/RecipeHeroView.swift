@@ -5,11 +5,12 @@
 //  Created by 酒井文也 on 2026/10/25.
 //
 
-// Recipe Detailの背面に固定表示するHero。実画像は未提供のため、カテゴリ色のグラデーション＋
-// SF Symbolをプレースホルダーとして主役に置く。スクロール量(scrollOffset)から
-// RecipeHeroMetricsでStretch/Parallaxパラメータを求め、描画変換のみで表現する（レイアウトは不変）。
+// Recipe Detailの背面に固定表示するHero。レシピの実写真(Asset Catalog, Bundle.module)を主役に置き、
+// 画像が無いレシピはカテゴリ色グラデーション＋SF Symbolのプレースホルダーへフォールバックする。
+// スクロール量(scrollOffset)からRecipeHeroMetricsでStretch/Parallaxを求め、背面固定Heroの
+// フレーム高さ(Stretch)とオフセット(Parallax)で表現する（ScrollViewのレイアウトは動かさない）。
 //
-// 配置方針: このHeroはScrollViewの外側(ZStack背面)に固定し、不透明な本文がその上をスクロールする。
+// 配置方針: このHeroはScrollViewの外側(ZStack背面)に固定し、不透明な本文がその上をスクロールして覆う。
 // これにより下方向の重なりや上方向の隙間が生じず、Hero領域はコンテンツに自然に覆われる。
 //
 // Reduce Motion有効時はStretch/Parallaxを無効化し、静的なHeroとして表示する。
@@ -38,22 +39,46 @@ struct RecipeHeroView: View {
             expandedHeight: expandedHeight,
             parallaxFactor: parallaxFactor
         )
-        // PullDownは下端を基準に上方向へ拡大（overscrollの隙間を埋める）
-        let stretchScale = reduceMotion ? 1 : (expandedHeight + metrics.stretchAmount) / expandedHeight
+        // PullDownは下方向へフレームを伸ばして隙間を埋める（背面固定なので本文は動かない）
+        let stretch = reduceMotion ? 0 : metrics.stretchAmount
         // 上スクロール時は本文より緩やかに上へ逃がす（遅延）
         let parallaxShift = reduceMotion ? 0 : -(max(0, scrollOffset) * parallaxFactor)
 
         heroContent
             .frame(maxWidth: .infinity)
-            .frame(height: expandedHeight)
-            .scaleEffect(stretchScale, anchor: .top)
+            .frame(height: expandedHeight + stretch, alignment: .top)
             .offset(y: parallaxShift)
             .clipped()
     }
 
     // MARK: - Private View
 
+    @ViewBuilder
     private var heroContent: some View {
+        if let uiImage = Self.loadImage(for: recipe.id) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .scaledToFill()
+                // 戻るボタン等の可読性のため、上部に控えめなスクリムを敷く
+                .overlay(alignment: .top) {
+                    LinearGradient(
+                        colors: [.black.opacity(0.28), .clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 120)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(recipe.title)（\(recipe.category.displayName)）の写真")
+        } else {
+            placeholder
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(recipe.title)（\(recipe.category.displayName)）の写真プレースホルダー")
+        }
+    }
+
+    // 画像が無いレシピ向けのプレースホルダー（カテゴリ色グラデーション＋シンボル）
+    private var placeholder: some View {
         let base = Self.heroColor(for: recipe.category)
         return ZStack {
             LinearGradient(
@@ -64,15 +89,16 @@ struct RecipeHeroView: View {
             Image(systemName: recipe.category.symbolName)
                 .font(.system(size: 64, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.9))
-                // シンボルはグラデーションよりさらに緩やかにParallaxさせ、奥行きを出す
-                .offset(y: reduceMotion ? 0 : -(max(0, scrollOffset) * parallaxFactor * 0.4))
         }
-        // VoiceOver: 実写ではないため「写真プレースホルダー」と明示（装飾ではなく内容説明）
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(recipe.title)（\(recipe.category.displayName)）の写真プレースホルダー")
     }
 
     // MARK: - Private Function
+
+    // レシピIDに対応するHero画像をBundle.moduleのAsset Catalogから読み込む（無ければnil）。
+    // ローカルアセットのため同期読み込みで十分（ネットワーク/非同期ロードは不要）。
+    static func loadImage(for recipeID: RecipeID) -> UIImage? {
+        UIImage(named: recipeID.rawValue, in: .module, with: nil)
+    }
 
     // カテゴリ別のプレースホルダー色（DomainをSwiftUIへ結合させないためView側でマップ）
     static func heroColor(for category: RecipeCategory) -> Color {
