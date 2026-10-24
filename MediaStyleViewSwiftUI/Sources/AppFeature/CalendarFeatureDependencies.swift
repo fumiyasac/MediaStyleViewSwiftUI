@@ -18,6 +18,7 @@ public struct CalendarFeatureDependencies: Sendable {
 
     // AppFeature内部で使う（外部には公開しない）
     let calendarUseCase: any CalendarUseCase
+    let timelineUseCase: any TimelineUseCase
     let recipeRepository: any RecipeRepository
     let mealLogRepository: any MealLogRepository
     let days: [CalendarDay]
@@ -31,6 +32,10 @@ public struct CalendarFeatureDependencies: Sendable {
         self.recipeRepository = recipeRepository
         self.mealLogRepository = mealLogRepository
         self.calendarUseCase = DefaultCalendarUseCase(
+            recipeRepository: recipeRepository,
+            mealLogRepository: mealLogRepository
+        )
+        self.timelineUseCase = DefaultTimelineUseCase(
             recipeRepository: recipeRepository,
             mealLogRepository: mealLogRepository
         )
