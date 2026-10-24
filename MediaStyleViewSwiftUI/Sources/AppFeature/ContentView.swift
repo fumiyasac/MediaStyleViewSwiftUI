@@ -29,6 +29,7 @@ public struct ContentView: View {
         CalendarRootView(
             days: dependencies.days,
             calendarUseCase: dependencies.calendarUseCase,
+            timelineUseCase: dependencies.timelineUseCase,
             recipeRepository: dependencies.recipeRepository,
             mealLogRepository: dependencies.mealLogRepository
         )
