@@ -5,7 +5,7 @@
 //  Created by 酒井文也 on 2026/10/21.
 //
 
-// 1ヶ月分の見出しとグリッド配置。MonthViewから責務単位で分割。
+// 1ヶ月分の見出しとグリッド配置。表示に必要なState・イベント・タップ通知をグリッドへ透過する。
 
 import SwiftUI
 
@@ -15,6 +15,8 @@ struct CalendarMonthView: View {
 
     let grid: CalendarMonthGrid
     let days: [CalendarDay]
+    let state: CalendarFeatureState
+    let onSelectDate: (Date) -> Void
 
     // MARK: - Body
 
@@ -26,7 +28,12 @@ struct CalendarMonthView: View {
                 .padding(.top, 12)
                 .padding(.bottom, 2)
 
-            CalendarMonthGridView(grid: grid, days: days)
+            CalendarMonthGridView(
+                grid: grid,
+                days: days,
+                state: state,
+                onSelectDate: onSelectDate
+            )
         }
         // 月の区切りとして上端に細い境界線を重ねる
         .overlay(alignment: .top) {
@@ -49,13 +56,5 @@ struct CalendarMonthView: View {
                     .foregroundColor(.secondary)
         }
         return month
-    }
-}
-
-#Preview {
-    ScrollView {
-        if let grid = CalendarMonthGrid(baseMonth: CalendarMonthGrid.startOfMonth(for: Date()), offset: 0) {
-            CalendarMonthView(grid: grid, days: CalendarSampleData.days)
-        }
     }
 }
