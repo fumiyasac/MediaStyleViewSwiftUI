@@ -24,6 +24,11 @@ struct TimelineScreen: View {
     @State private var searchText: String = ""
     @State private var path: [CalendarRoute] = []
 
+    // Zoom遷移用Namespace。このNavigationStack（Timelineタブ）内で遷移元と遷移先に共有する。
+    // 画面再描画で作り直さないよう@Namespaceで保持する（Reducer/ViewModel/Repositoryへは渡さない）。
+    @Namespace private var zoomNamespace
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private let factory = TimelineViewDataFactory()
 
     // MARK: - Initializer
@@ -61,13 +66,8 @@ struct TimelineScreen: View {
             .searchable(text: $searchText, prompt: "レシピ・メモを検索")
             .navigationDestination(for: CalendarRoute.self) { route in
                 switch route {
-                case let .recipeDetail(recipeID, _):
-                    RecipeDetailScreen(
-                        recipeID: recipeID,
-                        recipeRepository: recipeRepository,
-                        mealLogRepository: mealLogRepository,
-                        onMealLogSaved: onMealLogSaved
-                    )
+                case let .recipeDetail(recipeID, _, sourceID):
+                    recipeDetail(recipeID: recipeID, sourceID: sourceID)
                 }
             }
             .tint(CalendarTheme.accent)
@@ -112,10 +112,31 @@ struct TimelineScreen: View {
     private func timelineList(sections: [TimelineSectionViewData]) -> some View {
         List {
             ForEach(sections) { section in
-                TimelineDaySectionView(section: section, onTapEntry: handleTapEntry)
+                TimelineDaySectionView(
+                    section: section,
+                    namespace: zoomNamespace,
+                    onTapEntry: handleTapEntry
+                )
             }
         }
         .listStyle(.plain)
+    }
+
+    // Recipe Detailの遷移先。遷移元(sourceID)があり、かつReduce MotionでなければZoomを適用する。
+    // それ以外（Calendar直接遷移/Deep Link/Reduce Motion）は標準Navigationへフォールバックする。
+    @ViewBuilder
+    private func recipeDetail(recipeID: RecipeID, sourceID: RecipeTransitionSourceID?) -> some View {
+        let detail = RecipeDetailScreen(
+            recipeID: recipeID,
+            recipeRepository: recipeRepository,
+            mealLogRepository: mealLogRepository,
+            onMealLogSaved: onMealLogSaved
+        )
+        if !reduceMotion, let sourceID {
+            detail.navigationTransition(.zoom(sourceID: sourceID, in: zoomNamespace))
+        } else {
+            detail
+        }
     }
 
     private func errorView(message: String) -> some View {
@@ -157,6 +178,13 @@ struct TimelineScreen: View {
     private func handleTapEntry(_ entry: TimelineEntryViewData) {
         guard !entry.recipeMissing else { return }
         let publicationDayKey: DateKey? = entry.kind == .recipe ? entry.dayKey : nil
-        path.append(.recipeDetail(recipeID: entry.recipeID, publicationDayKey: publicationDayKey))
+        let route = CalendarRoute.recipeDetail(
+            recipeID: entry.recipeID,
+            publicationDayKey: publicationDayKey,
+            sourceID: .timeline(entry: entry)
+        )
+        // 遷移中の二重タップで同じRouteを重複pushしない
+        guard path.last != route else { return }
+        path.append(route)
     }
 }
