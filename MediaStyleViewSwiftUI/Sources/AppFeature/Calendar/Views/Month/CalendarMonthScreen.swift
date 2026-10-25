@@ -142,13 +142,6 @@ struct CalendarMonthScreen: View {
                         NotificationCenter.default.post(name: .scrollToToday, object: nil)
                     }
                 }
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button {
-                        // NOTE: 追加アクション用のプレースホルダ（現状の非動作ボタンを維持）
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
             }
             .tint(CalendarTheme.accent)
         }

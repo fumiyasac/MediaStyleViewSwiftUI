@@ -50,11 +50,11 @@ struct DateKeyTests {
 @Suite("FixtureRecipeRepository")
 struct FixtureRecipeRepositoryTests {
 
-    @Test("レシピMasterは12件返る")
-    func fixtureHasTwelveRecipes() async throws {
+    @Test("レシピMasterは24件返る")
+    func fixtureHasTwentyFourRecipes() async throws {
         let repository = FixtureRecipeRepository(referenceDate: Date(), calendar: tokyoCalendar)
         let recipes = try await repository.allRecipes()
-        #expect(recipes.count == 12)
+        #expect(recipes.count == 24)
     }
 
     @Test("IDでMasterを引ける。存在しないIDはnil")
