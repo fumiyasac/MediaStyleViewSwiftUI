@@ -125,7 +125,8 @@ struct CalendarMonthScreen: View {
             }
             .navigationDestination(for: CalendarRoute.self) { route in
                 switch route {
-                case let .recipeDetail(recipeID, _):
+                case let .recipeDetail(recipeID, _, _):
+                    // Calendarは適切な遷移元カードを持たないため標準Navigation（Zoomは適用しない）
                     RecipeDetailScreen(
                         recipeID: recipeID,
                         recipeRepository: recipeRepository,
@@ -159,7 +160,7 @@ struct CalendarMonthScreen: View {
         let entriesOnDay = viewModel.state.monthLoad(monthKey).recipeEntries
             .filter { $0.dateKey == dateKey }
         guard let entry = entriesOnDay.first else { return }
-        path.append(.recipeDetail(recipeID: entry.recipeID, publicationDayKey: dateKey))
+        path.append(.recipeDetail(recipeID: entry.recipeID, publicationDayKey: dateKey, sourceID: nil))
     }
 
     // MARK: - Private Function（スクロール機構は従来どおり・変更なし）

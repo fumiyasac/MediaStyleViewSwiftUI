@@ -13,6 +13,8 @@ import SwiftUI
 struct TimelineDaySectionView: View {
 
     let section: TimelineSectionViewData
+    // Zoom遷移用Namespace（遷移先と共有）。各行を遷移元として一意IDでマークする。
+    let namespace: Namespace.ID
     let onTapEntry: (TimelineEntryViewData) -> Void
 
     var body: some View {
@@ -29,6 +31,8 @@ struct TimelineDaySectionView: View {
                     }
                 }
                 .buttonStyle(.plain)
+                // この行をZoom遷移の遷移元としてマーク（戻り時にこのカードへ縮小する）
+                .matchedTransitionSource(id: RecipeTransitionSourceID.timeline(entry: entry), in: namespace)
             }
         } header: {
             Text(section.title)
