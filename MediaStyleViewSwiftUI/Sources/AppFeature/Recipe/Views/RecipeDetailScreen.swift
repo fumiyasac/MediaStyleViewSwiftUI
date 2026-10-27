@@ -171,7 +171,8 @@ struct RecipeDetailScreen: View {
 
 // 本文（スクロール量に依存しない）。別Viewに切り出すことで、スクロール中に
 // scrollOffsetが変化しても本文のbodyが再評価されないようにする（材料・手順の再描画を避ける）。
-private struct RecipeDetailContent: View {
+// Snapshotテストから同期的に検証できるようinternalにしている（挙動は不変）。
+struct RecipeDetailContent: View {
 
     let recipe: Recipe
     let mealLogs: [MealLogSummary]
