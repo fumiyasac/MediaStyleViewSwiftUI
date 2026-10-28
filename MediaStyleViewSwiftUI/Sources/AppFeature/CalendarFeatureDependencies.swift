@@ -40,22 +40,32 @@ public struct CalendarFeatureDependencies: Sendable {
         )
     }
 
-    // 本番構成。Recipe=Fixture、MealLog=SwiftData(永続)。SwiftData生成失敗時はInMemoryへフォールバック。
+    // 本番構成。取得元(Recipe=Fixture/Remote)はComposition Rootで1度だけ決め、全画面で同一の
+    // Repositoryインスタンスを共有する（ViewからRepositoryを生成しない・画面ごとに不一致にしない）。
+    // MealLogは取得元に関わらず常にSwiftData(永続)。生成失敗時のみInMemoryへフォールバックして起動は守る。
+    //
+    // 取得元の決定:
+    //  - Debugでは環境変数 RECIPE_DATA_SOURCE（fixture/remote）で選べる。既定は .fixture。
+    //  - Releaseでは環境変数を読まず常に .fixture（ローカル開発用Backend URLをReleaseの既定に固定しない）。
+    // Remoteの動作確認時のみ、SchemeのEnvironment Variableから明示的に remote を選ぶ。
     public init() {
-        let mealLogRepository: any MealLogRepository
-        do {
-            let container = try MealLogModelContainerFactory.makePersistent()
-            mealLogRepository = SwiftDataMealLogRepository(modelContainer: container)
-        } catch {
-            // 永続ストアを開けない場合でもアプリは起動させる（調理記録は当該起動中のみ保持）
-            mealLogRepository = InMemoryMealLogRepository()
-        }
-        self.init(recipeRepository: FixtureRecipeRepository(), mealLogRepository: mealLogRepository)
+        self.init(dataSource: Self.resolvedDataSource())
+    }
+
+    // 取得元を明示指定して組み立てる口（動作確認・テスト用）。
+    // Remoteは開発既定の接続先(.localDevelopment=localhost:8080)を使う。接続先の切り替えが要る場合は
+    // 本型の内部でAPIConfigurationを差し替える（Viewや上位にAPIConfigurationを露出させない）。
+    public init(dataSource: RecipeDataSource) {
+        let recipeRepository: any RecipeRepository = Self.makeRecipeRepository(for: dataSource)
+        self.init(
+            recipeRepository: recipeRepository,
+            mealLogRepository: Self.makePersistentMealLogRepository()
+        )
     }
 
     // MARK: - Factory
 
-    // Preview/Test用のin-memory構成（SwiftDataを永続化しない）
+    // Preview/Test用のin-memory構成（Recipe=Fixture、SwiftDataを永続化しない）
     public static func inMemory() -> CalendarFeatureDependencies {
         CalendarFeatureDependencies(
             recipeRepository: FixtureRecipeRepository(),
@@ -63,28 +73,49 @@ public struct CalendarFeatureDependencies: Sendable {
         )
     }
 
-    // Remote(API)構成の組み立て口。Recipe=RemoteRecipeRepository、MealLog=SwiftData(永続)。
-    // 本PRでは本番init()はFixtureのままにし、本Factoryは次PRでの本番切替に備えて用意しておく
-    // （ここを呼ぶまで実アプリの取得元はFixtureから変わらない）。
-    // 公開シグネチャに internal な APIConfiguration を露出させないため internal とする。
-    // AppFeature 内部および @testable import から到達できれば本 PR の要件(構成口の用意)は満たす。
-    static func remote(
-        configuration: APIConfiguration = .localDevelopment
-    ) -> CalendarFeatureDependencies {
-        let apiClient = APIClient(
-            configuration: configuration,
-            httpClient: URLSessionHTTPClient()
-        )
-        let mealLogRepository: any MealLogRepository
+    // MARK: - Private Factory
+
+    // 取得元ごとにRecipeRepositoryを組み立てる。FixtureとRemoteは同一Protocolなので、
+    // ここで実装を選ぶだけで上位(UseCase/ViewModel/View)は無変更のまま取得元を切り替えられる。
+    // Remote失敗時にFixtureへ暗黙フォールバックしない（通信失敗は失敗として上位へ伝える）。
+    // (テストから取得元→実装の対応を検証できるよう internal。SwiftData生成の副作用なく確認できる)
+    static func makeRecipeRepository(for dataSource: RecipeDataSource) -> any RecipeRepository {
+        switch dataSource {
+        case .fixture:
+            return FixtureRecipeRepository()
+        case .remote:
+            // 開発時はDocker Composeで起動したGo API(localhost:8080)を既定の接続先にする。
+            // Simulatorはlocalhostで到達できるが、実機ではMacのLANアドレス等を注入する必要がある。
+            let apiClient = APIClient(
+                configuration: .localDevelopment,
+                httpClient: URLSessionHTTPClient()
+            )
+            return RemoteRecipeRepository(apiClient: apiClient)
+        }
+    }
+
+    // MealLogのSwiftData(永続)Repository。生成失敗時はInMemoryへフォールバックして起動を守る。
+    private static func makePersistentMealLogRepository() -> any MealLogRepository {
         do {
             let container = try MealLogModelContainerFactory.makePersistent()
-            mealLogRepository = SwiftDataMealLogRepository(modelContainer: container)
+            return SwiftDataMealLogRepository(modelContainer: container)
         } catch {
-            mealLogRepository = InMemoryMealLogRepository()
+            // 永続ストアを開けない場合でもアプリは起動させる（調理記録は当該起動中のみ保持）
+            return InMemoryMealLogRepository()
         }
-        return CalendarFeatureDependencies(
-            recipeRepository: RemoteRecipeRepository(apiClient: apiClient),
-            mealLogRepository: mealLogRepository
-        )
+    }
+
+    // 起動時の取得元を解決する。DebugのみRECIPE_DATA_SOURCEを尊重し、Releaseは常に既定(.fixture)。
+    // environmentは差し替え可能にしてテストで解決ロジックを検証できるようにする（既定は実プロセス環境）。
+    static func resolvedDataSource(
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> RecipeDataSource {
+        #if DEBUG
+        if let raw = environment[RecipeDataSource.environmentKey],
+           let source = RecipeDataSource(rawValue: raw) {
+            return source
+        }
+        #endif
+        return .default
     }
 }
