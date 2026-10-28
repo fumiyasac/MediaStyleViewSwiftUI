@@ -1,0 +1,8 @@
+.git
+.env
+*.md
+bin/
+api
+seeder
+# iOS 側は Backend イメージに不要
+../MediaStyleViewSwiftUI
