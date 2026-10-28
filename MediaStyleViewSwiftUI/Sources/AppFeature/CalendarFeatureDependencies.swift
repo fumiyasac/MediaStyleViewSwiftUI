@@ -62,4 +62,29 @@ public struct CalendarFeatureDependencies: Sendable {
             mealLogRepository: InMemoryMealLogRepository()
         )
     }
+
+    // Remote(API)構成の組み立て口。Recipe=RemoteRecipeRepository、MealLog=SwiftData(永続)。
+    // 本PRでは本番init()はFixtureのままにし、本Factoryは次PRでの本番切替に備えて用意しておく
+    // （ここを呼ぶまで実アプリの取得元はFixtureから変わらない）。
+    // 公開シグネチャに internal な APIConfiguration を露出させないため internal とする。
+    // AppFeature 内部および @testable import から到達できれば本 PR の要件(構成口の用意)は満たす。
+    static func remote(
+        configuration: APIConfiguration = .localDevelopment
+    ) -> CalendarFeatureDependencies {
+        let apiClient = APIClient(
+            configuration: configuration,
+            httpClient: URLSessionHTTPClient()
+        )
+        let mealLogRepository: any MealLogRepository
+        do {
+            let container = try MealLogModelContainerFactory.makePersistent()
+            mealLogRepository = SwiftDataMealLogRepository(modelContainer: container)
+        } catch {
+            mealLogRepository = InMemoryMealLogRepository()
+        }
+        return CalendarFeatureDependencies(
+            recipeRepository: RemoteRecipeRepository(apiClient: apiClient),
+            mealLogRepository: mealLogRepository
+        )
+    }
 }
