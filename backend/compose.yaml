@@ -1,0 +1,69 @@
+# Docker Compose プロジェクト名。Docker Desktop の Name 表示が "recipe_calendar" になる。
+name: recipe_calendar
+
+services:
+  # MySQL（ローカル開発用）。utf8mb4 固定で日本語が壊れないようにする。
+  mysql:
+    image: mysql:8.4
+    container_name: recipe_calendar_mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    # Host へは公開しない（API/テストはコンテナネットワーク経由で接続する）。
+    # ホストから直接 MySQL を触りたい場合のみ、以下を localhost 限定で有効化する。
+    # ports:
+    #   - "127.0.0.1:3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      # ping が通ってから migrate/api を利用可能にする
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # 明示的な Migration 実行用（docker compose up では起動しない: profile tools）。
+  migrate:
+    image: migrate/migrate:v4.17.1
+    container_name: recipe_calendar_migrate
+    profiles: ["tools"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations:ro
+    # 既定は up。down 等は `docker compose run` の引数で上書きする。
+    command:
+      - -path=/migrations
+      - -database=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(mysql:3306)/${MYSQL_DATABASE}
+      - up
+
+  # Go API サーバー
+  api:
+    build: .
+    container_name: recipe_calendar_api
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      # コンテナ内部の待受ポートは 8080 固定（ホスト公開ポートとは分離する）
+      HTTP_PORT: 8080
+      # コンテナ間はサービス名 mysql で解決する
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      SEED_DIR: /app/seed
+    ports:
+      # ホスト公開ポート。既定 8080。他プロセスと衝突する場合は API_HOST_PORT で変更する。
+      - "${API_HOST_PORT:-8080}:8080"
+
+volumes:
+  mysql_data:

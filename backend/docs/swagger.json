@@ -1,0 +1,403 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "既存 iOS アプリ「Daily Recipe Calendar + Cooking Log」の Recipe/Calendar を提供する Backend API。\n認証・認可は実装しておらず、ローカル開発・学習/検証用途を想定する（インターネットへ直接公開しない）。",
+        "title": "Daily Recipe Calendar Backend API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/api/v1/calendar": {
+            "get": {
+                "description": "指定期間 [from, to]（両端含む）の掲載割当を、参照レシピ概要つきで返す。0 件なら空配列。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "掲載カレンダーを取得",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "2026-10-01",
+                        "description": "開始日 (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2026-10-31",
+                        "description": "終了日 (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recipes": {
+            "get": {
+                "description": "カテゴリ絞り込みとページングでレシピ概要の一覧を返す。limit 既定 20 / 最大 100。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "summary": "レシピ一覧を取得",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "カテゴリ (japanese/western/chinese/italian/dessert/healthy)",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "取得件数 (既定 20, 最大 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "オフセット (既定 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/recipes/{id}": {
+            "get": {
+                "description": "材料・手順（順序保持）と画像参照を含む詳細を返す。存在しない ID は 404。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "summary": "レシピ詳細を取得",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "recipe-01",
+                        "description": "Recipe ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz": {
+            "get": {
+                "description": "API プロセスが起動しているかを返す。DB には依存しない。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "プロセス生存確認",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/readyz": {
+            "get": {
+                "description": "MySQL へ接続可能かを確認する。利用不可なら 503 を返す。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "依存サービス準備確認",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarEntry": {
+            "type": "object",
+            "properties": {
+                "displayOrder": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "id": {
+                    "type": "string",
+                    "example": "daily-2026-10-01-recipe-01"
+                },
+                "publicationDate": {
+                    "type": "string",
+                    "example": "2026-10-01"
+                },
+                "recipe": {
+                    "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeSummary"
+                }
+            }
+        },
+        "github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarRange": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string",
+                    "example": "2026-10-01"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "2026-10-31"
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 31
+                }
+            }
+        },
+        "github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarEntry"
+                    }
+                },
+                "range": {
+                    "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarRange"
+                }
+            }
+        },
+        "github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorBody": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "RECIPE_NOT_FOUND"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Recipe was not found."
+                }
+            }
+        },
+        "github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorBody"
+                }
+            }
+        },
+        "github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "ok"
+                }
+            }
+        },
+        "github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.Pagination": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "example": 20
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 24
+                }
+            }
+        },
+        "github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeDetail": {
+            "type": "object",
+            "properties": {
+                "calories": {
+                    "type": "integer",
+                    "example": 320
+                },
+                "category": {
+                    "type": "string",
+                    "example": "japanese"
+                },
+                "cookingMinutes": {
+                    "type": "integer",
+                    "example": 25
+                },
+                "id": {
+                    "type": "string",
+                    "example": "recipe-01"
+                },
+                "imageReference": {
+                    "description": "ImageReference は画像参照キー（存在しない場合は null）。iOS は RecipeID をキーに画像を解決する。",
+                    "type": "string",
+                    "example": "recipe-01"
+                },
+                "ingredients": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "servings": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "summary": {
+                    "type": "string",
+                    "example": "塩麹でふっくら仕上げる定番の焼き魚"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "鮭の塩麹焼き"
+                }
+            }
+        },
+        "github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeSummary"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.Pagination"
+                }
+            }
+        },
+        "github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeSummary": {
+            "type": "object",
+            "properties": {
+                "calories": {
+                    "type": "integer",
+                    "example": 320
+                },
+                "category": {
+                    "type": "string",
+                    "example": "japanese"
+                },
+                "cookingMinutes": {
+                    "type": "integer",
+                    "example": 25
+                },
+                "id": {
+                    "type": "string",
+                    "example": "recipe-01"
+                },
+                "servings": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "summary": {
+                    "type": "string",
+                    "example": "塩麹でふっくら仕上げる定番の焼き魚"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "鮭の塩麹焼き"
+                }
+            }
+        }
+    }
+}
