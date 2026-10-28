@@ -1,0 +1,276 @@
+basePath: /
+definitions:
+  github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarEntry:
+    properties:
+      displayOrder:
+        example: 0
+        type: integer
+      id:
+        example: daily-2026-10-01-recipe-01
+        type: string
+      publicationDate:
+        example: "2026-10-01"
+        type: string
+      recipe:
+        $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeSummary'
+    type: object
+  github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarRange:
+    properties:
+      from:
+        example: "2026-10-01"
+        type: string
+      to:
+        example: "2026-10-31"
+        type: string
+      total:
+        example: 31
+        type: integer
+    type: object
+  github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarEntry'
+        type: array
+      range:
+        $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarRange'
+    type: object
+  github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorBody:
+    properties:
+      code:
+        example: RECIPE_NOT_FOUND
+        type: string
+      message:
+        example: Recipe was not found.
+        type: string
+    type: object
+  github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorBody'
+    type: object
+  github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.HealthResponse:
+    properties:
+      status:
+        example: ok
+        type: string
+    type: object
+  github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.Pagination:
+    properties:
+      limit:
+        example: 20
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      total:
+        example: 24
+        type: integer
+    type: object
+  github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeDetail:
+    properties:
+      calories:
+        example: 320
+        type: integer
+      category:
+        example: japanese
+        type: string
+      cookingMinutes:
+        example: 25
+        type: integer
+      id:
+        example: recipe-01
+        type: string
+      imageReference:
+        description: ImageReference は画像参照キー（存在しない場合は null）。iOS は RecipeID をキーに画像を解決する。
+        example: recipe-01
+        type: string
+      ingredients:
+        items:
+          type: string
+        type: array
+      servings:
+        example: 2
+        type: integer
+      steps:
+        items:
+          type: string
+        type: array
+      summary:
+        example: 塩麹でふっくら仕上げる定番の焼き魚
+        type: string
+      title:
+        example: 鮭の塩麹焼き
+        type: string
+    type: object
+  github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeSummary'
+        type: array
+      pagination:
+        $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.Pagination'
+    type: object
+  github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeSummary:
+    properties:
+      calories:
+        example: 320
+        type: integer
+      category:
+        example: japanese
+        type: string
+      cookingMinutes:
+        example: 25
+        type: integer
+      id:
+        example: recipe-01
+        type: string
+      servings:
+        example: 2
+        type: integer
+      summary:
+        example: 塩麹でふっくら仕上げる定番の焼き魚
+        type: string
+      title:
+        example: 鮭の塩麹焼き
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: |-
+    既存 iOS アプリ「Daily Recipe Calendar + Cooking Log」の Recipe/Calendar を提供する Backend API。
+    認証・認可は実装しておらず、ローカル開発・学習/検証用途を想定する（インターネットへ直接公開しない）。
+  title: Daily Recipe Calendar Backend API
+  version: "1.0"
+paths:
+  /api/v1/calendar:
+    get:
+      description: 指定期間 [from, to]（両端含む）の掲載割当を、参照レシピ概要つきで返す。0 件なら空配列。
+      parameters:
+      - description: 開始日 (YYYY-MM-DD)
+        example: "2026-10-01"
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: 終了日 (YYYY-MM-DD)
+        example: "2026-10-31"
+        in: query
+        name: to
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.CalendarResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse'
+      summary: 掲載カレンダーを取得
+      tags:
+      - calendar
+  /api/v1/recipes:
+    get:
+      description: カテゴリ絞り込みとページングでレシピ概要の一覧を返す。limit 既定 20 / 最大 100。
+      parameters:
+      - description: カテゴリ (japanese/western/chinese/italian/dessert/healthy)
+        in: query
+        name: category
+        type: string
+      - description: 取得件数 (既定 20, 最大 100)
+        in: query
+        name: limit
+        type: integer
+      - description: オフセット (既定 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse'
+      summary: レシピ一覧を取得
+      tags:
+      - recipes
+  /api/v1/recipes/{id}:
+    get:
+      description: 材料・手順（順序保持）と画像参照を含む詳細を返す。存在しない ID は 404。
+      parameters:
+      - description: Recipe ID
+        example: recipe-01
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.RecipeDetail'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse'
+      summary: レシピ詳細を取得
+      tags:
+      - recipes
+  /healthz:
+    get:
+      description: API プロセスが起動しているかを返す。DB には依存しない。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.HealthResponse'
+      summary: プロセス生存確認
+      tags:
+      - health
+  /readyz:
+    get:
+      description: MySQL へ接続可能かを確認する。利用不可なら 503 を返す。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.HealthResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/github_com_fumiyasac_MediaStyleViewSwiftUI_backend_internal_adapter_http_dto.ErrorResponse'
+      summary: 依存サービス準備確認
+      tags:
+      - health
+schemes:
+- http
+swagger: "2.0"
