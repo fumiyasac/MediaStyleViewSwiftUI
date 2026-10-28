@@ -52,3 +52,35 @@ Simulatorの手動確認で担保します。
 通常実行・CIでは基準画像を自動で書き換えません（記録は基準が無い場合のみ）。基準画像の更新は、実際のUI変更内容と
 対応している必要があります。不安定なテストは許容差分を広げて通すのではなく、原因（非同期描画・現在日時依存・フォント等）を
 調査してください。
+
+## Remote Repository（Go Backend API連携）
+
+Go Backend API（Phase 12 / ADR 0012, `http://localhost:8080`）から `Recipe` / `DailyRecipeEntry` を
+取得する Swift 側のネットワーク層・データ層を用意しています。設計の詳細は
+[ADR 0013](docs/adr/0013-swift-remote-repository-go-backend-api-boundary.md) を参照してください。
+
+- 既存の `RecipeRepository` Protocol はそのまま（UseCase/ViewModel/UI は無変更）。
+- **本番の取得元は現時点でも `FixtureRecipeRepository` のまま**。Remote への切り替えは次フェーズで行います。
+- 層構成: `HTTPClient`(送受信) → `APIClient`(Endpoint生成/Status→型付きエラー/Decode) →
+  `RecipeDTOMapper`(DTO→Domain) → `RemoteRecipeRepository`(既存Protocolへ準拠)。
+- 実装: `Sources/AppFeature/Networking/`、`Sources/AppFeature/Recipe/Data/Remote/`
+
+### 接続先の設定
+
+`APIConfiguration`（`baseURL` / `timeout`）を注入します。Base URL はコードに直接埋め込まず、
+開発既定は `.localDevelopment`（`http://localhost:8080`）です。実機・Release では適切な接続先を注入してください。
+
+### テスト
+
+- Unit Test: `FakeHTTPClient` を使い実 API に依存せず検証（`Tests/AppFeatureTests/Remote/`）。
+- Contract Test: 実 API から取得した JSON を DTO が Decode できるか検証（`RecipeAPIContractTests`）。
+- Integration Test: 実 API への接続はオプトイン（既定は無効）。稼働中の Backend に対して実行する場合:
+
+```sh
+# 事前に Backend を起動（docker compose 等、http://localhost:8080 で待受）
+TEST_RUNNER_RUN_REMOTE_INTEGRATION=1 xcodebuild test -scheme AppFeature \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:AppFeatureTests/RemoteRecipeIntegrationTests
+```
+
+API が未起動の通常テスト実行では Integration Test は skip され、失敗しません。
