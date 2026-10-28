@@ -59,16 +59,40 @@ Go Backend API（Phase 12 / ADR 0012, `http://localhost:8080`）から `Recipe` 
 取得する Swift 側のネットワーク層・データ層を用意しています。設計の詳細は
 [ADR 0013](docs/adr/0013-swift-remote-repository-go-backend-api-boundary.md) を参照してください。
 
-- 既存の `RecipeRepository` Protocol はそのまま（UseCase/ViewModel/UI は無変更）。
-- **本番の取得元は現時点でも `FixtureRecipeRepository` のまま**。Remote への切り替えは次フェーズで行います。
+- 既存の `RecipeRepository` Protocol に準拠する形で取得元(Fixture/Remote)を切り替えます（UseCase/ViewModel/UI は無変更）。
+- Calendar / Timeline / Recipe Detail を Remote(Go API)と接続しつつ、MealLog は取得元に関わらず SwiftData のままです。
+  詳細は [ADR 0014](docs/adr/0014-remote-recipe-integration-calendar-timeline-detail.md) を参照してください。
+- **通常起動の既定取得元は `fixture`**。Remote は Debug で明示選択したときだけ使います。
 - 層構成: `HTTPClient`(送受信) → `APIClient`(Endpoint生成/Status→型付きエラー/Decode) →
   `RecipeDTOMapper`(DTO→Domain) → `RemoteRecipeRepository`(既存Protocolへ準拠)。
-- 実装: `Sources/AppFeature/Networking/`、`Sources/AppFeature/Recipe/Data/Remote/`
+- 実装: `Sources/AppFeature/Networking/`、`Sources/AppFeature/Recipe/Data/Remote/`、
+  取得元選択は `CalendarFeatureDependencies` と `RecipeDataSource`。
 
-### 接続先の設定
+### 取得元(Fixture / Remote)の切り替え
+
+Composition Root(`CalendarFeatureDependencies`)が起動時に 1 度だけ取得元を決め、全画面で同一の
+Repository インスタンスを共有します。Debug では環境変数 `RECIPE_DATA_SOURCE` で選択できます
+（既定 `fixture` / Release は常に `fixture`）。
+
+Xcode の Scheme → Run → Arguments → Environment Variables に設定します。
+
+```text
+RECIPE_DATA_SOURCE=fixture   # 同梱データ（既定・従来どおり）
+RECIPE_DATA_SOURCE=remote    # Go API（localhost:8080）から取得
+```
+
+Remote で動作確認するときは、先に Docker Compose で Backend(MySQL + Go API)を起動してください。
+
+### 接続先の設定 / ATS
 
 `APIConfiguration`（`baseURL` / `timeout`）を注入します。Base URL はコードに直接埋め込まず、
 開発既定は `.localDevelopment`（`http://localhost:8080`）です。実機・Release では適切な接続先を注入してください。
+
+ATS はグローバル無効化せず、アプリの `Info.plist` で `NSAllowsLocalNetworking` のみ許可しています
+（localhost 等ローカル宛ての平文 HTTP だけを許可し、インターネット宛ての保護は維持）。
+
+Remote 取得が失敗した場合は Fixture へ暗黙フォールバックせず、エラー表示＋再試行で可視化します
+（Offline Cache / Fallback は次フェーズ）。
 
 ### テスト
 
