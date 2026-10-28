@@ -2,9 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!--
+	  App Transport Security。
+	  グローバルな無効化(NSAllowsArbitraryLoads)は行わない。
+	  ローカル開発のGo API(http://localhost:8080)へ到達するために、ローカルネットワーク宛てだけ
+	  平文HTTPを許可する(NSAllowsLocalNetworking)。この例外はlocalhost/*.local/リンクローカル等に
+	  限定され、インターネット宛て通信のATS保護は維持される。
+	  本番の取得元は既定でFixtureのため、Releaseでこの例外が実通信に使われることはない。
+	-->
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoads</key>
+		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
 </dict>

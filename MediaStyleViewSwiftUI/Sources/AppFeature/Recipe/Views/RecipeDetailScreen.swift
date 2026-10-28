@@ -74,13 +74,20 @@ struct RecipeDetailScreen: View {
                 .navigationTitle("レシピ")
 
         case let .failed(message):
+            // 取得失敗。Remote取得ではネットワーク失敗やタイムアウトが現実に起こるため、
+            // 利用者が明示的に再試行できるようにする（再試行はこのレシピ取得だけを再実行する）。
             VStack(spacing: 12) {
                 Image(systemName: "exclamationmark.triangle")
                     .font(.largeTitle)
                     .foregroundStyle(.secondary)
                 Text(message)
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Button("再読み込み") { viewModel.load() }
+                    .buttonStyle(.borderedProminent)
+                    .tint(CalendarTheme.accent)
             }
+            .padding(32)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .accessibilityElement(children: .combine)
             .navigationTitle("レシピ")
