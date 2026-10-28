@@ -1,0 +1,212 @@
+[
+  {
+    "id": "daily-2026-10-01-recipe-01",
+    "publicationDate": "2026-10-01",
+    "recipeId": "recipe-01",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-02-recipe-02",
+    "publicationDate": "2026-10-02",
+    "recipeId": "recipe-02",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-03-recipe-03",
+    "publicationDate": "2026-10-03",
+    "recipeId": "recipe-03",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-04-recipe-04",
+    "publicationDate": "2026-10-04",
+    "recipeId": "recipe-04",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-04-recipe-16",
+    "publicationDate": "2026-10-04",
+    "recipeId": "recipe-16",
+    "displayOrder": 1
+  },
+  {
+    "id": "daily-2026-10-05-recipe-05",
+    "publicationDate": "2026-10-05",
+    "recipeId": "recipe-05",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-06-recipe-06",
+    "publicationDate": "2026-10-06",
+    "recipeId": "recipe-06",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-07-recipe-07",
+    "publicationDate": "2026-10-07",
+    "recipeId": "recipe-07",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-08-recipe-08",
+    "publicationDate": "2026-10-08",
+    "recipeId": "recipe-08",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-09-recipe-09",
+    "publicationDate": "2026-10-09",
+    "recipeId": "recipe-09",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-10-recipe-10",
+    "publicationDate": "2026-10-10",
+    "recipeId": "recipe-10",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-11-recipe-11",
+    "publicationDate": "2026-10-11",
+    "recipeId": "recipe-11",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-11-recipe-23",
+    "publicationDate": "2026-10-11",
+    "recipeId": "recipe-23",
+    "displayOrder": 1
+  },
+  {
+    "id": "daily-2026-10-12-recipe-12",
+    "publicationDate": "2026-10-12",
+    "recipeId": "recipe-12",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-13-recipe-13",
+    "publicationDate": "2026-10-13",
+    "recipeId": "recipe-13",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-14-recipe-14",
+    "publicationDate": "2026-10-14",
+    "recipeId": "recipe-14",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-15-recipe-15",
+    "publicationDate": "2026-10-15",
+    "recipeId": "recipe-15",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-16-recipe-16",
+    "publicationDate": "2026-10-16",
+    "recipeId": "recipe-16",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-17-recipe-17",
+    "publicationDate": "2026-10-17",
+    "recipeId": "recipe-17",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-18-recipe-18",
+    "publicationDate": "2026-10-18",
+    "recipeId": "recipe-18",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-18-recipe-06",
+    "publicationDate": "2026-10-18",
+    "recipeId": "recipe-06",
+    "displayOrder": 1
+  },
+  {
+    "id": "daily-2026-10-19-recipe-19",
+    "publicationDate": "2026-10-19",
+    "recipeId": "recipe-19",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-20-recipe-20",
+    "publicationDate": "2026-10-20",
+    "recipeId": "recipe-20",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-21-recipe-21",
+    "publicationDate": "2026-10-21",
+    "recipeId": "recipe-21",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-22-recipe-22",
+    "publicationDate": "2026-10-22",
+    "recipeId": "recipe-22",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-23-recipe-23",
+    "publicationDate": "2026-10-23",
+    "recipeId": "recipe-23",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-24-recipe-24",
+    "publicationDate": "2026-10-24",
+    "recipeId": "recipe-24",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-25-recipe-01",
+    "publicationDate": "2026-10-25",
+    "recipeId": "recipe-01",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-25-recipe-13",
+    "publicationDate": "2026-10-25",
+    "recipeId": "recipe-13",
+    "displayOrder": 1
+  },
+  {
+    "id": "daily-2026-10-26-recipe-02",
+    "publicationDate": "2026-10-26",
+    "recipeId": "recipe-02",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-27-recipe-03",
+    "publicationDate": "2026-10-27",
+    "recipeId": "recipe-03",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-28-recipe-04",
+    "publicationDate": "2026-10-28",
+    "recipeId": "recipe-04",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-29-recipe-05",
+    "publicationDate": "2026-10-29",
+    "recipeId": "recipe-05",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-30-recipe-06",
+    "publicationDate": "2026-10-30",
+    "recipeId": "recipe-06",
+    "displayOrder": 0
+  },
+  {
+    "id": "daily-2026-10-31-recipe-07",
+    "publicationDate": "2026-10-31",
+    "recipeId": "recipe-07",
+    "displayOrder": 0
+  }
+]
