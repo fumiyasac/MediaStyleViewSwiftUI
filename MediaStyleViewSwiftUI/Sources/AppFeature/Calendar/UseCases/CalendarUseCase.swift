@@ -63,12 +63,14 @@ struct DefaultCalendarUseCase: CalendarUseCase {
     func loadMonth(_ month: Date) async throws -> CalendarMonthPayload {
         let monthKey = MonthKey(date: month, calendar: calendar)
 
-        // 掲載レシピ(全件→当月抽出)と調理記録(当月範囲)を並行取得する
-        async let allEntries = recipeRepository.allDailyEntries()
+        // 掲載レシピ(当月範囲)と調理記録(当月範囲)を並行取得する。
+        // 掲載レシピは dailyEntries(in:) で当月の閉区間だけを要求する。
+        // Remote実装ではこれがCalendar API(from/to=当月)の1リクエストになり、全期間を取りに行かない。
+        // Fixtureは既定実装で全件を範囲フィルタするため、従来と同じ結果になる。
+        async let monthEntries = recipeRepository.dailyEntries(in: monthKey.dateKeyRange)
         async let monthLogs = mealLogRepository.summaries(in: monthKey.dateKeyRange)
 
-        let recipeEntries = try await allEntries
-            .filter { $0.dateKey.value.hasPrefix(monthKey.value) }
+        let recipeEntries = try await monthEntries
             .sorted { $0.dateKey < $1.dateKey }
         let mealLogs = try await monthLogs
 

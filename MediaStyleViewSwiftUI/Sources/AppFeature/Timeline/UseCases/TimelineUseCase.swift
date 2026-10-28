@@ -50,13 +50,17 @@ struct DefaultTimelineUseCase: TimelineUseCase {
     // MARK: - TimelineUseCase
 
     func load(in range: ClosedRange<DateKey>) async throws -> TimelinePayload {
-        // レシピMaster・全掲載割当・期間内の調理記録を並行取得する
+        // レシピMaster(名称解決用)・期間内の掲載割当・期間内の調理記録を並行取得する。
+        // 掲載割当は dailyEntries(in:) で期間限定して取得する。
+        // Remote実装ではこれがCalendar API(from/to=期間)の1リクエストになり、全期間を取りに行かない。
+        // recipesはTimeline行のタイトル解決に使う名称辞書(Recipe概要)。Remoteでも一覧APIの
+        // ページング1系統で取得でき、掲載件数ぶんの詳細取得(N+1)は発生させない。
         async let recipesResult = recipeRepository.allRecipes()
-        async let entriesResult = recipeRepository.allDailyEntries()
+        async let entriesResult = recipeRepository.dailyEntries(in: range)
         async let logsResult = mealLogRepository.summaries(in: range)
 
         let recipes = try await recipesResult
-        let dailyEntries = try await entriesResult.filter { range.contains($0.dateKey) }
+        let dailyEntries = try await entriesResult
         let mealLogs = try await logsResult
 
         return TimelinePayload(dailyEntries: dailyEntries, mealLogs: mealLogs, recipes: recipes)

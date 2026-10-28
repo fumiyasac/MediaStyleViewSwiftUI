@@ -35,3 +35,36 @@ enum APIClientError: Error, Sendable, Equatable {
     // DTO → Domain 変換失敗（不正カテゴリ・必須欠損・不正日付など）
     case mapping(message: String)
 }
+
+// MARK: - LocalizedError
+
+// 画面に出す日本語メッセージを型側で持つ（error.localizedDescriptionがそのまま使える）。
+// ViewModel/UIは error.localizedDescription を表示する既存設計のため、ここで意味のある文言へ変換する。
+// 技術詳細(生のデコードエラー等)はそのまま出さず、利用者が次の行動を取れる粒度の文言にする。
+extension APIClientError: LocalizedError {
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "接続先の設定が正しくありません。"
+        case .network:
+            return "ネットワークに接続できませんでした。通信環境を確認して再試行してください。"
+        case .timeout:
+            return "通信がタイムアウトしました。時間をおいて再試行してください。"
+        case .invalidResponse:
+            return "サーバーから不正な応答が返りました。"
+        case let .badRequest(_, message):
+            return message ?? "リクエストに誤りがあります。"
+        case .notFound:
+            return "対象のデータが見つかりませんでした。"
+        case .serverError:
+            return "サーバーで問題が発生しました。時間をおいて再試行してください。"
+        case let .unexpectedStatus(status):
+            return "想定外の応答(\(status))が返りました。"
+        case .decoding:
+            return "データの読み取りに失敗しました。"
+        case .mapping:
+            return "データの変換に失敗しました。"
+        }
+    }
+}
