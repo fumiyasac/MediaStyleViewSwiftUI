@@ -90,6 +90,18 @@ struct RemoteRecipeRepository: RecipeRepository {
         return try response.items.map { try RecipeDTOMapper.map($0) }
     }
 
+    // 指定範囲の掲載割当を返す。範囲をそのままCalendar API(from/to)へ渡し、必要な範囲だけ取得する。
+    // 既定実装(allDailyEntries→フィルタ)をoverrideし、Calendarの月表示・Timelineが
+    // 「表示に必要な範囲」だけをAPIから取ってくるようにする（全期間の過剰取得を避ける）。
+    // 呼び出し側(Calendar: 1ヶ月, Timeline: 約60日)はいずれもCalendar APIの上限(92日)以内。
+    func dailyEntries(in range: ClosedRange<DateKey>) async throws -> [DailyRecipeEntry] {
+        let response = try await apiClient.calendar(
+            from: range.lowerBound.value,
+            to: range.upperBound.value
+        )
+        return try response.items.map { try RecipeDTOMapper.map($0) }
+    }
+
     // 全期間の掲載割当を返す（基準日 ±45 日の有限ウィンドウに限定）。
     func allDailyEntries() async throws -> [DailyRecipeEntry] {
         let base = referenceDate()
