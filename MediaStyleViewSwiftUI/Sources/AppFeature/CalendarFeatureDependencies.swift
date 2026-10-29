@@ -86,12 +86,26 @@ public struct CalendarFeatureDependencies: Sendable {
         case .remote:
             // 開発時はDocker Composeで起動したGo API(localhost:8080)を既定の接続先にする。
             // Simulatorはlocalhostで到達できるが、実機ではMacのLANアドレス等を注入する必要がある。
+            let configuration = APIConfiguration.localDevelopment
             let apiClient = APIClient(
-                configuration: .localDevelopment,
+                configuration: configuration,
                 httpClient: URLSessionHTTPClient()
             )
-            return RemoteRecipeRepository(apiClient: apiClient)
+            let remote = RemoteRecipeRepository(apiClient: apiClient)
+            // RemoteをCachedRecipeRepositoryで包み、オフライン時に保存済みデータを表示できるようにする。
+            // キャッシュの名前空間はBase URLのhost:port由来にして、別サーバー(Debug切替等)のデータを混同しない。
+            let store = FileRecipeCacheStore(namespace: Self.cacheNamespace(for: configuration))
+            return CachedRecipeRepository(remote: remote, store: store)
         }
+    }
+
+    // Base URLのhost:portからキャッシュ名前空間を作る（例: localhost_8080）。
+    private static func cacheNamespace(for configuration: APIConfiguration) -> String {
+        let host = configuration.baseURL.host ?? "unknown-host"
+        if let port = configuration.baseURL.port {
+            return "\(host)_\(port)"
+        }
+        return host
     }
 
     // MealLogのSwiftData(永続)Repository。生成失敗時はInMemoryへフォールバックして起動を守る。

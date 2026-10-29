@@ -34,9 +34,12 @@ struct CalendarMonthLoad: Sendable, Equatable {
     var mealLogs: [MealLogSummary]
     var phase: CalendarLoadPhase
     var requestID: UUID?
+    // 掲載レシピの取得元（最新/キャッシュ）。キャッシュ表示中であることをUIへ示すために持つ。
+    // 既定は.remote（Fixture/キャッシュ非対応構成では常に最新扱い＝注記を出さない）。
+    var origin: RecipeDataOrigin = .remote
 
     static let empty = CalendarMonthLoad(
-        recipeEntries: [], mealLogs: [], phase: .idle, requestID: nil
+        recipeEntries: [], mealLogs: [], phase: .idle, requestID: nil, origin: .remote
     )
 
     var isLoading: Bool { phase == .loading }

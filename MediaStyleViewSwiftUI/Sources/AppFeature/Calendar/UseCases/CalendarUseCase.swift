@@ -18,9 +18,22 @@ import Foundation
 // MARK: - CalendarMonthPayload
 
 // 1ヶ月分の取得結果。掲載レシピと調理記録を分けて保持するSendable値型。
+// originは掲載レシピの取得元(最新/キャッシュ)。既定は.remoteで、Fixtureやキャッシュ非対応構成では
+// 従来どおり.remote扱いになる（追加表示を出さない）。
 struct CalendarMonthPayload: Sendable, Equatable {
     let recipeEntries: [DailyRecipeEntry]
     let mealLogs: [MealLogSummary]
+    let origin: RecipeDataOrigin
+
+    init(
+        recipeEntries: [DailyRecipeEntry],
+        mealLogs: [MealLogSummary],
+        origin: RecipeDataOrigin = .remote
+    ) {
+        self.recipeEntries = recipeEntries
+        self.mealLogs = mealLogs
+        self.origin = origin
+    }
 
     static let empty = CalendarMonthPayload(recipeEntries: [], mealLogs: [])
 }
@@ -62,18 +75,31 @@ struct DefaultCalendarUseCase: CalendarUseCase {
 
     func loadMonth(_ month: Date) async throws -> CalendarMonthPayload {
         let monthKey = MonthKey(date: month, calendar: calendar)
+        let range = monthKey.dateKeyRange
 
         // 掲載レシピ(当月範囲)と調理記録(当月範囲)を並行取得する。
-        // 掲載レシピは dailyEntries(in:) で当月の閉区間だけを要求する。
+        // 掲載レシピは範囲取得(dailyEntries(in:))で当月の閉区間だけを要求する。
         // Remote実装ではこれがCalendar API(from/to=当月)の1リクエストになり、全期間を取りに行かない。
-        // Fixtureは既定実装で全件を範囲フィルタするため、従来と同じ結果になる。
-        async let monthEntries = recipeRepository.dailyEntries(in: monthKey.dateKeyRange)
-        async let monthLogs = mealLogRepository.summaries(in: monthKey.dateKeyRange)
+        // キャッシュ対応Repositoryなら取得元(最新/キャッシュ)も受け取り、Payloadへ添えてUIへ運ぶ。
+        async let entriesResult = loadEntries(in: range)
+        async let monthLogs = mealLogRepository.summaries(in: range)
 
-        let recipeEntries = try await monthEntries
-            .sorted { $0.dateKey < $1.dateKey }
+        let (entries, origin) = try await entriesResult
+        let recipeEntries = entries.sorted { $0.dateKey < $1.dateKey }
         let mealLogs = try await monthLogs
 
-        return CalendarMonthPayload(recipeEntries: recipeEntries, mealLogs: mealLogs)
+        return CalendarMonthPayload(recipeEntries: recipeEntries, mealLogs: mealLogs, origin: origin)
+    }
+
+    // 取得元(origin)付きで掲載割当を取得する。Repositoryがキャッシュ対応(CacheAwareRecipeReading)なら
+    // 出所付きで読み、そうでなければ(Fixture/直Remote)最新(.remote)として扱う。
+    private func loadEntries(
+        in range: ClosedRange<DateKey>
+    ) async throws -> (entries: [DailyRecipeEntry], origin: RecipeDataOrigin) {
+        if let cacheAware = recipeRepository as? CacheAwareRecipeReading {
+            let result = try await cacheAware.loadDailyEntries(in: range)
+            return (result.entries, result.origin)
+        }
+        return (try await recipeRepository.dailyEntries(in: range), .remote)
     }
 }

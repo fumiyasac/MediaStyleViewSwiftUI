@@ -44,7 +44,7 @@ struct TimelineReducer: Sendable {
             return TimelineTransition(state: newState, effects: [.load(requestID: requestID)])
 
         // 読み込み成功。進行中IDと一致する時のみ反映（古い結果は破棄）。
-        case let .loadSucceeded(requestID, entries):
+        case let .loadSucceeded(requestID, entries, origin):
             guard state.requestID == requestID else {
                 return TimelineTransition(state: state, effects: [])
             }
@@ -52,6 +52,8 @@ struct TimelineReducer: Sendable {
             newState.entries = entries
             newState.phase = .loaded
             newState.requestID = nil
+            // 取得元(最新/キャッシュ)を保持し、キャッシュ表示中であることをUIが示せるようにする
+            newState.origin = origin
             return TimelineTransition(state: newState, effects: [])
 
         // 読み込み失敗。一致時のみエラーにする。既存entriesは保持する。

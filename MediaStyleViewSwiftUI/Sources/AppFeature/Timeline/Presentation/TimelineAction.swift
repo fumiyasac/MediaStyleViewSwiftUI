@@ -25,6 +25,6 @@ enum TimelineAction: Sendable, Equatable {
 
     // MARK: - Effect completion
 
-    case loadSucceeded(requestID: UUID, entries: [TimelineEntryViewData])
+    case loadSucceeded(requestID: UUID, entries: [TimelineEntryViewData], origin: RecipeDataOrigin)
     case loadFailed(requestID: UUID, message: String)
 }
