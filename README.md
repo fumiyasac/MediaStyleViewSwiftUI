@@ -91,8 +91,33 @@ Remote で動作確認するときは、先に Docker Compose で Backend(MySQL 
 ATS はグローバル無効化せず、アプリの `Info.plist` で `NSAllowsLocalNetworking` のみ許可しています
 （localhost 等ローカル宛ての平文 HTTP だけを許可し、インターネット宛ての保護は維持）。
 
-Remote 取得が失敗した場合は Fixture へ暗黙フォールバックせず、エラー表示＋再試行で可視化します
-（Offline Cache / Fallback は次フェーズ）。
+Remote 取得が失敗した場合は Fixture へ暗黙フォールバックしません。通信障害クラス（未接続/タイムアウト/5xx）
+では保存済みキャッシュを表示し、それ以外（400/404/Decoding/Mapping）やキャッシュ無しはエラー表示＋再試行で可視化します。
+
+### オフラインキャッシュ（永続キャッシュと通信障害からの復旧）
+
+Remote モードでは、正常取得した Recipe と Calendar 掲載情報を端末へ永続キャッシュし、オフライン時に
+保存済みデータを表示します。設計の詳細は
+[ADR 0015](docs/adr/0015-offline-recipe-cache-and-recovery.md) を参照してください。
+
+- 方式: Codable + JSON File + actor（Application Support 配下。atomic write / Schema Version / 取得日時を保持）。
+- 層: `CachedRecipeRepository`（Remote と Cache を調停）→ `RecipeCacheStore`（`FileRecipeCacheStore` actor）。
+  MealLog は従来どおり SwiftData で、キャッシュ削除（`removeAll`）の影響を受けません。
+- 取得戦略: Network-first + Cache フォールバック。オンラインは常に最新を取得・保存し、通信障害時のみ
+  期限内の保存済み（Stale）を表示します。空配列も「取得済みの空」として保存し、未取得範囲とは区別します。
+- 鮮度: Fresh（24h 以内）/ Stale（〜30 日）/ Expired（30 日超は不使用）。保存済み表示中は画面に
+  「保存済みデータを表示中（取得日時）」のバナーを出し、最新と混同させません（最新/Fixture では非表示）。
+- 失敗分類: 404 は「見つからない」として扱い古い詳細を出し続けません。Decoding/Mapping はキャッシュで
+  隠さず伝搬します。Cancellation はフォールバックのトリガーにしません。
+- 実装: `Sources/AppFeature/Recipe/Data/Cache/`
+
+実 API に対する「取得→キャッシュ→オフライン表示」の統合検証（オプトイン）:
+
+```sh
+TEST_RUNNER_RUN_REMOTE_INTEGRATION=1 xcodebuild test -scheme AppFeature \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:AppFeatureTests/CacheLiveIntegrationTests
+```
 
 ### テスト
 
