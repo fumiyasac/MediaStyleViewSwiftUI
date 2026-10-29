@@ -92,12 +92,12 @@ struct RecipeDetailScreen: View {
             .accessibilityElement(children: .combine)
             .navigationTitle("レシピ")
 
-        case let .loaded(recipe, mealLogs):
-            loadedBody(recipe: recipe, mealLogs: mealLogs)
+        case let .loaded(recipe, mealLogs, origin):
+            loadedBody(recipe: recipe, mealLogs: mealLogs, origin: origin)
         }
     }
 
-    private func loadedBody(recipe: Recipe, mealLogs: [MealLogSummary]) -> some View {
+    private func loadedBody(recipe: Recipe, mealLogs: [MealLogSummary], origin: RecipeDataOrigin) -> some View {
         ZStack(alignment: .top) {
             // 背面に固定するHero（本文がこの上をスクロールして覆う）
             RecipeHeroView(
@@ -118,6 +118,7 @@ struct RecipeDetailScreen: View {
                     RecipeDetailContent(
                         recipe: recipe,
                         mealLogs: mealLogs,
+                        origin: origin,
                         onAddTap: { showEditor = true }
                     )
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -183,6 +184,8 @@ struct RecipeDetailContent: View {
 
     let recipe: Recipe
     let mealLogs: [MealLogSummary]
+    // 取得元（最新/キャッシュ）。既定nilは最新扱いでバナー非表示（Snapshot・従来構成に影響しない）。
+    var origin: RecipeDataOrigin? = nil
     let onAddTap: () -> Void
 
     private static let logDateFormatter: DateFormatter = {
@@ -194,6 +197,9 @@ struct RecipeDetailContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
+            // 保存済み(キャッシュ)表示中のみ出る注記。最新/Fixtureでは非表示（従来の見た目を保つ）。
+            OfflineCacheBanner(origin: origin)
+
             VStack(alignment: .leading, spacing: 6) {
                 Text(recipe.category.displayName)
                     .font(.caption.bold())

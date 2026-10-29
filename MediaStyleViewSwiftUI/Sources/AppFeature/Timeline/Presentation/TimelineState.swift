@@ -31,6 +31,8 @@ struct TimelineState: Sendable, Equatable {
     var phase: TimelineLoadPhase
     // 進行中リクエストの識別子（完了Actionの照合に使う）
     var requestID: UUID?
+    // 直近成功時の取得元（最新/キャッシュ）。nilは未取得。キャッシュ表示中の提示に使う。
+    var origin: RecipeDataOrigin? = nil
 
     // MARK: - Derived
 
@@ -55,5 +57,5 @@ struct TimelineState: Sendable, Equatable {
 
     // MARK: - Factory
 
-    static let initial = TimelineState(entries: [], phase: .idle, requestID: nil)
+    static let initial = TimelineState(entries: [], phase: .idle, requestID: nil, origin: nil)
 }

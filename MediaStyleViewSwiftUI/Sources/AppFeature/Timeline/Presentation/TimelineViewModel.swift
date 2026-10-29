@@ -93,7 +93,7 @@ final class TimelineViewModel {
                     let payload = try await useCase.load(in: range)
                     let entries = factory.makeEntries(from: payload)
                     try Task.checkCancellation()
-                    self?.send(.loadSucceeded(requestID: requestID, entries: entries))
+                    self?.send(.loadSucceeded(requestID: requestID, entries: entries, origin: payload.origin))
                 } catch is CancellationError {
                     // キャンセルは画面エラーにしない
                 } catch {

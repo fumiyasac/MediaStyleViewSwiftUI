@@ -70,6 +70,8 @@ struct CalendarReducer: Sendable {
             load.mealLogs = payload.mealLogs
             load.phase = .loaded
             load.requestID = nil
+            // 取得元(最新/キャッシュ)を反映し、キャッシュ表示中であることをUIが示せるようにする
+            load.origin = payload.origin
             var newState = state
             newState.months[monthKey] = load
             return CalendarTransition(state: newState, effects: [])

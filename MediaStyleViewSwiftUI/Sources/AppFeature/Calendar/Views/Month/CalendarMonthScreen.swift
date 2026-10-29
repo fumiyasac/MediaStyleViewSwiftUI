@@ -51,6 +51,14 @@ struct CalendarMonthScreen: View {
         return Self.yearFormatter.string(from: date)
     }
 
+    // 現在最上部に見えている月の取得元（読込済みのときだけ）。キャッシュ表示中の注記に使う。
+    private var visibleMonthOrigin: RecipeDataOrigin? {
+        let date = Self.calendar.date(byAdding: .month, value: visibleOffset, to: baseMonth) ?? baseMonth
+        let key = MonthKey(date: date, calendar: Self.dateKeyCalendar)
+        let load = viewModel.state.monthLoad(key)
+        return load.phase == .loaded ? load.origin : nil
+    }
+
     // MARK: - Initializer
 
     init(
@@ -72,6 +80,8 @@ struct CalendarMonthScreen: View {
     var body: some View {
         NavigationStack(path: $path) {
             VStack(spacing: 0) {
+                // 表示中の月が保存済み(キャッシュ)なら注記を出す。最新/Fixtureでは非表示（従来の見た目）。
+                OfflineCacheBanner(origin: visibleMonthOrigin)
                 CalendarWeekdayHeaderView()
                 Divider()
 

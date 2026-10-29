@@ -59,6 +59,9 @@ struct TimelineScreen: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
 
+                // 保存済み(キャッシュ)データ表示中のみ出る注記。最新/Fixtureでは非表示。
+                OfflineCacheBanner(origin: viewModel.state.origin)
+
                 content
             }
             .navigationTitle("タイムライン")
