@@ -71,11 +71,12 @@ struct RecipeDataSourceWiringTests {
         #expect(repository is FixtureRecipeRepository)
     }
 
-    // 3. remote選択でRemoteRecipeRepositoryが組み立てられる
-    @Test("remote選択で RemoteRecipeRepository を使う")
-    func remoteBuildsRemoteRepository() {
+    // 3. remote選択では、永続キャッシュで包んだCachedRecipeRepositoryが組み立てられる
+    //    （Remoteを直接返さず、オフライン時に保存済みデータを使えるようにする）。
+    @Test("remote選択で CachedRecipeRepository(Remoteをキャッシュで内包) を使う")
+    func remoteBuildsCachedRepository() {
         let repository = CalendarFeatureDependencies.makeRecipeRepository(for: .remote)
-        #expect(repository is RemoteRecipeRepository)
+        #expect(repository is CachedRecipeRepository)
     }
 
     // 4. inMemory()はFixture構成（Preview/Test既定）

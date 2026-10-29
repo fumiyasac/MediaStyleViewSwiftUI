@@ -202,7 +202,7 @@ struct TimelineReducerTests {
         var state = TimelineState.initial
         state.phase = .loading
         state.requestID = UUID()
-        let t = reducer.reduce(state: state, action: .loadSucceeded(requestID: UUID(), entries: []))
+        let t = reducer.reduce(state: state, action: .loadSucceeded(requestID: UUID(), entries: [], origin: .remote))
         #expect(t.state == state)
     }
 
