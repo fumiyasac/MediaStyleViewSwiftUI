@@ -139,9 +139,11 @@ struct RecipeDetailScreen: View {
             }
         }
         // 標準ナビは常時表示する。タイトルは Hero が見えている間は "レシピ"、スクロールで Hero が
-        // 隠れてきたら料理名へ切り替える（Collapsing Title）。toolbarBackgroundを操作して半透明にする等の
-        // トリックは使わず、デフォルトの背景のまま扱う。
+        // 隠れてきたら料理名へ切り替える（Collapsing Title）。
+        // ナビ背景は常に不透明(.visible)にして、Hero 画像がナビ領域へ透けて見える違和感を無くす
+        // （SwiftUI既定ではスクロール先頭時にナビ背景が透過するため、明示的に.visibleで固定する）。
         .navigationTitle(isCompact ? recipe.title : "レシピ")
+        .toolbarBackground(.visible, for: .navigationBar)
         .sheet(isPresented: $showEditor) {
             MealLogEditorSheet(
                 recipeID: recipe.id,
