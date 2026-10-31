@@ -111,7 +111,11 @@ struct RecipeDetailScreen: View {
                 expandedHeight: Self.heroHeight,
                 reduceMotion: reduceMotion
             )
-            .frame(height: Self.heroHeight)
+            // レイアウト上は高さを heroHeight で確保しつつ、alignment: .top を明示する。
+            // RecipeHeroView の内部は Pull-down で heroHeight+stretch へ伸びるため、既定の center alignment では
+            // 伸びた分が上下へ半分ずつはみ出し「中央から広がる」ように見えてしまう。.top を指定すると、
+            // はみ出しは下方向のみとなり、画像は上端を基準に下方向へ伸びて見える。
+            .frame(height: Self.heroHeight, alignment: .top)
             .frame(maxWidth: .infinity)
 
             ScrollView {
