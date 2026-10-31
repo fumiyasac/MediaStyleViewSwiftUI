@@ -98,8 +98,13 @@ struct RecipeDetailScreen: View {
     }
 
     private func loadedBody(recipe: Recipe, mealLogs: [MealLogSummary], origin: RecipeDataOrigin) -> some View {
+        // 以前はHero/ScrollViewで ignoresSafeArea(edges: .top) を使い、ステータスバー・ナビゲーションバー領域の
+        // 下へ写真を抜けさせていたが、ナビ領域のコントロール(戻るボタン等)との可読性・レイアウトが不自然になる
+        // 問題があった。今回はデフォルトのNavigation領域(標準の戻るボタン・標準背景)をそのまま活かし、
+        // Heroはセーフエリア内の背面に固定する構成へ変更した。
+        // Collapsing Title（スクロールで現れるコンパクトタイトル）とParallax/Pull-downストレッチは維持する。
         ZStack(alignment: .top) {
-            // 背面に固定するHero（本文がこの上をスクロールして覆う）
+            // 背面に固定するHero（本文がこの上をスクロールして覆う）。セーフエリアの下にはみ出さない。
             RecipeHeroView(
                 recipe: recipe,
                 scrollOffset: scrollOffset,
@@ -108,7 +113,6 @@ struct RecipeDetailScreen: View {
             )
             .frame(height: Self.heroHeight)
             .frame(maxWidth: .infinity)
-            .ignoresSafeArea(edges: .top)
 
             ScrollView {
                 VStack(spacing: 0) {
@@ -133,11 +137,11 @@ struct RecipeDetailScreen: View {
                 scrollOffset = newOffset
                 updateCompactState(for: newOffset)
             }
-            // Heroと原点を揃えてフルブリード表示にする（本文はSafe Area内に収まる）
-            .ignoresSafeArea(edges: .top)
         }
-        .navigationTitle(isCompact ? recipe.title : "")
-        .toolbarBackground(isCompact ? .visible : .hidden, for: .navigationBar)
+        // 標準ナビは常時表示する。タイトルは Hero が見えている間は "レシピ"、スクロールで Hero が
+        // 隠れてきたら料理名へ切り替える（Collapsing Title）。toolbarBackgroundを操作して半透明にする等の
+        // トリックは使わず、デフォルトの背景のまま扱う。
+        .navigationTitle(isCompact ? recipe.title : "レシピ")
         .sheet(isPresented: $showEditor) {
             MealLogEditorSheet(
                 recipeID: recipe.id,
