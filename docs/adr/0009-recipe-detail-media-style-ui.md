@@ -13,7 +13,7 @@ Collapsing Header・Compact Titleをスクロール位置に連動して表現�
 
 本PRのためにDeployment Targetを **iOS 18** へ引き上げ、スクロール取得に `onScrollGeometryChange`(iOS 18+)を採用する
 （ユーザー方針）。Heroにはレシピの実写真を用いる。画像はAsset Catalog(`Resources/RecipeImages.xcassets`)に
-`RecipeID.rawValue`(`recipe-01`…`recipe-12`)で登録し、`Bundle.module`経由で読み込む。画像が無いレシピは
+`RecipeID.rawValue`(`recipe-01`…`recipe-24`)で登録し、`Bundle.module`経由で読み込む。画像が無いレシピは
 カテゴリ色グラデーション＋SF Symbolのプレースホルダーへフォールバックする。Recipe Domain・永続化設計は変更しない
 （Domainに画像プロパティは追加せず、View側でIDから解決する）。
 
@@ -38,12 +38,16 @@ Collapsing Header・Compact Titleをスクロール位置に連動して表現�
 
 4. **Collapsing Headerの表示戦略（固定Hero + 被せる本文）**:
    HeroはScrollViewの外側(ZStack背面)に固定し、不透明な本文(角丸トップ)がその上をスクロールして覆う。
-   これにより下方向の重なりや上方向の隙間が生じない。HeroはStretchを下端基準の`scaleEffect`、Parallaxを`offset`の
-   **描画変換のみ**で表現し、スクロールコンテンツのレイアウトサイズを毎フレーム変えない。
-   Compact Titleは、折りたたみが進んだら `navigationTitle` をレシピ名へ切り替え、`toolbarBackground` を可視化する。
-   展開時はタイトル空＋背景透過でHeroを見せる。システムの戻るボタンを使うためSafe Area・常時操作性・
-   タイトル二重化（principal併用しない）を回避できる。閾値は `compactTitleVisible` のヒステリシス
-   （表示0.9/非表示0.6）で点滅を防ぐ。
+   これにより下方向の重なりや上方向の隙間が生じない。HeroとScrollViewはステータスバー・ナビゲーションバー配下の
+   セーフエリア内に収め、デフォルトのNavigation領域（標準戻るボタン・標準背景）をそのまま活かす。
+   StretchはPull-down量ぶん`frame(height:)`を縦方向に伸長して表現し、下方向へのみ伸ばすためHero外側の
+   `frame`に`alignment: .top`を指定する。Parallaxは`offset`で表現する。いずれもスクロールコンテンツの
+   レイアウトサイズを毎フレーム変えない。
+   Compact Titleは、折りたたみが進んだら`navigationTitle`を展開時の"レシピ"から料理名へ切り替える。
+   `toolbarBackground(.visible, for: .navigationBar)`を明示指定し、スクロール先頭時でもナビ背景を常に不透明
+   （システム既定材質）へ固定することで、SwiftUI既定の透過によってHero画像がナビ領域へ透けて見える違和感を避ける。
+   システムの戻るボタンを使うためSafe Area・常時操作性・タイトル二重化（principal併用しない）を回避できる。
+   閾値は`compactTitleVisible`のヒステリシス（表示0.9/非表示0.6）で点滅を防ぐ。
 
 5. **Viewの責務分離**:
    - `RecipeDetailScreen`: 画面組み立て・ViewModel接続・ScrollView構成・onScrollGeometryChange・Navigation・Editor導線。
@@ -89,7 +93,7 @@ Collapsing Header・Compact Titleをスクロール位置に連動して表現�
 
 - Deployment Targetを iOS 18 へ引き上げた（App Target含む）。iOS 17以前は非対応。
 - Heroはレシピの実写真(800×600 JPEG, Asset Catalog, `RecipeID`キー)を使用。未登録IDはプレースホルダーへフォールバック。
-  画像はアプリにバンドルするためバイナリサイズが増える（約2MB/12枚）。Backendや画像配信基盤は新設しない。
+  画像はアプリにバンドルするためバイナリサイズが増える（約4.4MB/24枚）。Backendや画像配信基盤は新設しない。
 - Compact Title出現時、スクロール途中で本文の大タイトルと短時間併存しうる（重なりはせず、iOSの大タイトル遷移に類似）。
 - Pull-down Stretchはドラッグ中の過渡表現で、静止スクショでの採取が難しい（コード/計算で担保）。
 - 画面遷移のZoom表現は本PRに含めない。
