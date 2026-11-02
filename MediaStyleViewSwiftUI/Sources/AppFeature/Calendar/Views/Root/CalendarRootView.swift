@@ -22,7 +22,7 @@ struct CalendarRootView: View {
     private let mealLogRepository: any MealLogRepository
 
     @State private var selectedTab: CalendarTab = .month
-    @State private var viewModel: CalendarViewModel
+    @State private var calendarViewModel: CalendarViewModel
     @State private var timelineViewModel: TimelineViewModel
 
     // MARK: - Initializer
@@ -36,7 +36,7 @@ struct CalendarRootView: View {
     ) {
         self.recipeRepository = recipeRepository
         self.mealLogRepository = mealLogRepository
-        _viewModel = State(
+        _calendarViewModel = State(
             initialValue: CalendarViewModel(
                 useCase: calendarUseCase,
                 initialState: .initial(referenceDate: referenceDate)
@@ -53,7 +53,7 @@ struct CalendarRootView: View {
         TabView(selection: $selectedTab) {
             CalendarMonthScreen(
                 isActive: selectedTab == .month,
-                viewModel: viewModel,
+                viewModel: calendarViewModel,
                 recipeRepository: recipeRepository,
                 mealLogRepository: mealLogRepository,
                 onMealLogSaved: handleMealLogSaved
@@ -82,7 +82,7 @@ struct CalendarRootView: View {
 
     // 保存結果を両ViewModelへ通知（Calendarは直接反映、Timelineは再取得）
     private func handleMealLogSaved(_ summary: MealLogSummary) {
-        viewModel.send(.mealLogSaved(summary))
+        calendarViewModel.send(.mealLogSaved(summary))
         timelineViewModel.send(.reload)
     }
 }
